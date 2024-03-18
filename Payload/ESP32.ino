@@ -1,5 +1,5 @@
 #include <WiFi.h>
-//PINES DISPONIBLES 14 ,17, 19, 21, 22, 23.
+//PINES DISPONIBLES 14 ,17, 19, 21, 22, 23
 
 const char* ssid = "Iphone 5000";
 const char* password = "12345678";
