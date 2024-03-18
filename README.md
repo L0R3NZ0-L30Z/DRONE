@@ -9,4 +9,4 @@ Este proyecto fue realizado por cuatro locos en colaboración con el colegio La 
 
 
 
-![Team Drone](https://github.com/L0R3NZ0-L30Z/DRONE/assets/139158059/574dbf77-7f8b-4364-92b5-3325538770b9 =250x250)
+![Team Drone](https://github.com/L0R3NZ0-L30Z/DRONE/assets/139158059/574dbf77-7f8b-4364-92b5-3325538770b9 | =250x250)
