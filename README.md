@@ -8,4 +8,5 @@ Abarca desde las partes mecánicas hasta el diseño y las partes de programacion
 Este proyecto fue realizado por cuatro locos en colaboración con el colegio La Salle Florida.
 
 
-![Logo](https://github.com/L0R3NZ0-L30Z/DRONE/assets/139158059/72b20cdf-dd02-429f-a1de-51dcdc7ee173)
+
+![Team Dron](https://github.com/L0R3NZ0-L30Z/DRONE/assets/139158059/574dbf77-7f8b-4364-92b5-3325538770b9)
