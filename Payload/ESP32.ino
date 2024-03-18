@@ -1,4 +1,5 @@
 #include <WiFi.h>
+//PINES DISPONIBLES 14 ,17, 19, 21, 22, 23.
 
 const char* ssid = "Iphone 5000";
 const char* password = "12345678";
@@ -12,13 +13,6 @@ float GiroTemp[3] ={0,0,0};
 String header;
 
 unsigned long lastTime, timeout = 2000;
-/*
-const int P1 = 14;
-const int P2 = 17;
-const int P3 = 19;
-const int P4 = 21;
-const int P5 = 22;
-const int P6 = 23;*/
 
 void Trim(int val){
   int i=0;
