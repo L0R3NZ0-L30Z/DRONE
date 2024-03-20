@@ -50,7 +50,11 @@ void Coneccion_Wifi(){
        
         if(c == '\n'){
           if(currentLine.length() == 0){
-           
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-type:text/html");
+            client.println("Connection: close");
+            client.println();
+            
             if (header.indexOf("/T") >= 0) {
               String st1 = "Con@";
               String st2 = st1 + bat;
