@@ -1,8 +1,8 @@
 #include <WiFi.h>
 //PINES DISPONIBLES 14 ,17, 19, 21, 22, 23
 
-const char* ssid = "Iphone 5000";
-const char* password = "12345678";
+const char* ssid = "SSID";
+const char* password = "PASS";
 
 WiFiServer server(80);
 
@@ -60,7 +60,7 @@ void Coneccion_Wifi(){
             if (header.indexOf("/Tamos") >= 0) {
               String st1 = "Con@";
               String st2 = st1 + bat;
-              client.println("Conect");
+              Serial.println("Conect");
               client.println(st2);}
 
             if (header.indexOf("/bat") >= 0) {
