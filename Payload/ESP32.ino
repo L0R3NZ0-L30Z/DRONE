@@ -1,32 +1,30 @@
 #include <WiFi.h>
 //PINES DISPONIBLES 14 ,17, 19, 21, 22, 23
-
+/*
+COMMANDS RECIEVED:
+TX = Timer tick X
+TY = Timer tick Y
+TT = Timer tick Thumb
+0X = Cero click X
+0Y = Cero click Y
+T  = Ready?
+B  = Batterie level request
+*/
 const char* ssid = "SSID";
 const char* password = "PASS";
 
 WiFiServer server(80);
 
-int bat = 99.9;
+float bat = 99.9;
 float Giroscopio[3] ={0,0,0};
 float GiroscopioApp[3] ={0,0,0};
-float GiroTemp[3] ={0,0,0};
 String header;
 
 unsigned long lastTime, timeout = 2000;
 
-void Trim(int val){
-  int i=0;
-  if(val==0){
-    for(int o=0; o<=2; i++){
-      for(int i=i; temp[i]!="-"; i++){
-        Giroscopio[o] = temp[];
-      }
-      }
-    }
-  }
 void Inicio_Wifi(){
-  Serial.print("Conectando a ");
-  Serial.println(ssid);
+  //Serial.print("Conectando a ");
+  //Serial.println(ssid);
   WiFi.begin(ssid,password);
   while(WiFi.status() != WL_CONNECTED){
     delay(500);
@@ -39,7 +37,7 @@ void Coneccion_Wifi(){
   WiFiClient client = server.available();
   if(client){
     lastTime = millis();
-    Serial.println("Nuevo cliente");
+    //Serial.println("Nuevo cliente");
     String currentLine = "";
    
     while(client.connected() && millis() - lastTime <= timeout){
@@ -52,31 +50,27 @@ void Coneccion_Wifi(){
        
         if(c == '\n'){
           if(currentLine.length() == 0){
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-type:text/html");
-            client.println("Connection: close");
-            client.println();
            
-            if (header.indexOf("/Tamos") >= 0) {
+            if (header.indexOf("/T") >= 0) {
               String st1 = "Con@";
               String st2 = st1 + bat;
               Serial.println("Conect");
               client.println(st2);}
 
-            if (header.indexOf("/bat") >= 0) {
+            if (header.indexOf("/B") >= 0) {
               String st1 = "Con@";
               String st2 = st1 + bat;
               Serial.println("Nivel de bateria");
               client.println(st2);
               }  
-             
-            if (header.indexOf("/0-") >= 0) {
+            /*
+            if (header ) {
               temp = client.read();
               Trim(1);
               }                        
-            else if (header.indexOf("/01-") >= 0) {
+            else if (header("/01-") >= 0) {
               temp = client.read();
-              Trim(1);}
+              Trim(1);}*/
            
             break;}
            
@@ -92,7 +86,6 @@ void Coneccion_Wifi(){
 
     header = "";
     client.stop();
-    Serial.println("Cliente desconectado.");
   }
 }
 
