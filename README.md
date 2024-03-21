@@ -1,4 +1,4 @@
-# DRONE
+# DRONE:
 This is the full project of a functioning fying drone. 
 It covers freom the mechanical parts to the design and the coding parts.
 This project was made by four crazy dudes in colaboration with the La Salle Florida school.
