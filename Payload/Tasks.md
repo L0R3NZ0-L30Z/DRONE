@@ -2,7 +2,7 @@
 
 ### Remember to test evrything!!
 
-This is a list of all the functions that are mising on the main code. 
+This is a list of all the functions that are mising on the main code:
 
 - Get onboard accelerometer info.
 
