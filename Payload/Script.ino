@@ -179,5 +179,5 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   //PIDYaw();                               //PID YAW
   PIDAdder();                               //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();
-  delay(2)                                  //UNICO DELAY PARA DEJA PROCESAR
+  delay(2);                                //UNICO DELAY PARA DEJA PROCESAR
 }
