@@ -1,4 +1,3 @@
-#include <WiFi.h>
 //PINES DISPONIBLES 14 ,17, 19, 21, 22, 23.
 /*
 COMMANDS RECIEVED:
@@ -8,21 +7,25 @@ TT = Timer tick Thumb
 0X = Cero click X
 0Y = Cero click Y
 T  = Ready?
-B  = Batterie level request
+B  = Battery level request
 */
-const char* ssid = "SSID";
-const char* password = "PASS";
 
+#include <WiFi.h>
 WiFiServer server(80);
 
+const char* ssid = "SSID";//REMPLAZAR POR SSID
+const char* password = "PASS";//REMPLAZAR POR CONTRA
+String header; 
 float bat = 99.9;
 float Giroscopio[3] ={0,0,0};
 float GiroscopioApp[3] ={0,0,0};
-String header;
-
 unsigned long lastTime, timeout = 2000;
+#define M1 12
+#define M2 14
+#define M3 26
+#define M4 27
 
-void Inicio_Wifi(){
+void WifiStart(){
   //Serial.print("Conectando a ");
   //Serial.println(ssid);
   WiFi.begin(ssid,password);
@@ -33,7 +36,40 @@ void Inicio_Wifi(){
   Serial.print(WiFi.localIP());
   server.begin();
 }
-void Coneccion_Wifi(){
+void MotorStart(){
+  pinMode(12,OUTPUT);
+  pinMode(14,OUTPUT);
+  pinMode(26,OUTPUT);
+  pinMode(27,OUTPUT);  
+  //VVVV COMPLETAMENTE OPCIONAL VVVV
+  tone(12,1975, 250);
+  tone(14,1975, 250);
+  tone(26,1975, 250);
+  tone(27,1975, 250);
+  delay(350);
+  tone(12,2349, 250);
+  tone(14,2349, 250);
+  tone(26,2349, 250);
+  tone(27,2349, 250);
+  delay(350);
+  tone(12,2637, 250);
+  tone(14,2637, 250);
+  tone(26,2637, 250);
+  tone(27,2637, 250);
+  delay(350);
+  tone(12,1975, 400);
+  tone(14,1975, 400);
+  tone(26,1975, 400);
+  tone(27,1975, 400);
+  delay(420);
+  tone(12,2637, 400);
+  tone(14,2637, 400);
+  tone(26,2637, 400);
+  tone(27,2637, 400);
+  delay(500);
+  // ^^ TERMINA OPCIONAL ^^
+}
+void WifiConection(){
   WiFiClient client = server.available();
   if(client){
     lastTime = millis();
@@ -92,16 +128,25 @@ void Coneccion_Wifi(){
     client.stop();
   }
 }
+void MotorDriver(){
+
+}
 
 void setup() {
 
   Serial.begin(115200);
-  Inicio_Wifi();//INICIO DE RECEPCION DE DATOS
+  WifiStart();//INICIO DE RECEPCION DE DATOS
+  MotorStart();
+  //pinMode(,INPUT);//PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
  
 }
 
 void loop() {//NO PONER DELAYS!!!!!!!
-  Coneccion_Wifi();//RECEPCION DE DATOS
- 
-
+  WifiConection();//RECEPCION DE DATOS
+  //Giro();
+  //PIDRoll();
+  //PIDPitch();
+  //PIDYaw();
+  //PIDAdder
+  MotorDriver();
 }

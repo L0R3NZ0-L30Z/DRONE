@@ -12,3 +12,13 @@ This is a list of all the functions that are mising on the main code:
 
 - Batterie measurments.
 
+---
+Esta es una lista de todas las funciones que faltan en el código principal:
+
+- Obtener información del acelerómetro a bordo.
+
+- Procesar los datos del acelerómetro de ambas entradas.
+
+- Salida del motor.
+
+- Mediciones de baterías.
