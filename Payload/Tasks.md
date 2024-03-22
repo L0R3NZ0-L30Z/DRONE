@@ -6,9 +6,11 @@ This is a list of all the functions that are mising on the main code:
 
 - Get onboard accelerometer info.
 
-- Process the accelerometer data from both inputs.
+- Get onboard Magnometer info.
 
-- Motor output.
+- Proces all data from sensors to remove noise.
+
+- PID for all axes.
 
 - Batterie measurments.
 
@@ -17,8 +19,10 @@ Esta es una lista de todas las funciones que faltan en el código principal:
 
 - Obtener información del acelerómetro a bordo.
 
-- Procesar los datos del acelerómetro de ambas entradas.
+- Obtener información del Magnómetro a bordo.
 
-- Salida del motor.
+- Procesa todos los datos de los sensores para eliminar el ruido.
+
+- PID para todos los ejes.
 
 - Mediciones de baterías.
