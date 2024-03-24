@@ -4,6 +4,8 @@
 
 This is a list of all the functions that are mising on the main code:
 
+- Change the wifi structure to an ask replay conection.
+
 - Get onboard accelerometer info.
 
 - Get onboard Magnometer info.
@@ -16,6 +18,8 @@ This is a list of all the functions that are mising on the main code:
 
 ---
 Esta es una lista de todas las funciones que faltan en el código principal:
+
+- Cambiar la estructura WiFi a una estructura de pregunta y respuesta
 
 - Obtener información del acelerómetro a bordo.
 
