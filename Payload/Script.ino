@@ -1,18 +1,4 @@
 //PINES DISPONIBLES 14 ,17, 19, 21, 22, 23.
-/*
-COMMANDS RECIEVED:
-TX = Timer tick X
-TY = Timer tick Y
-TT = Timer tick Thumb
-0X = Cero click X
-0Y = Cero click Y
-T  = Ready?
-B  = Battery level request
-
-SOBRE LA POSICION DE LOS MOTORES":
- ^^  M1  M2 ^^
- ^^  M3  M4 ^^
-*/
 
 #include <WiFi.h>
 WiFiServer server(80);
@@ -89,7 +75,23 @@ void MotorStart(){
   // ^^ TERMINA OPCIONAL ^^
 }
 void WifiConection(){
+  /*
+  COMMANDS RECIEVED:
+  X = X
+  Y = Y
+  T = Thumb
+  0X = Cero click X
+  0Y = Cero click Y
+  T  = Ready?
+  B  = Battery level request
+
+  SOBRE LA POSICION DE LOS MOTORES":
+  ^^  M1  M2 ^^
+  ^^  M3  M4 ^^
+  */
+
   WiFiClient client = server.available();
+  client.println("HTTP/1.1 200 OK");
   if(client){
     lastTime = millis();
     //Serial.println("Nuevo cliente");
