@@ -5,7 +5,7 @@ WiFiServer server(80);
 
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
 const char* password = "PASS";              //REMPLAZAR POR CONTRA
-String header; 
+String msj; 
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
 float Giroscopio[3] ={0,0,0};               //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON
@@ -41,6 +41,28 @@ void WifiStart(){
   Serial.print(WiFi.localIP());
   server.begin();
 }
+void clasify(){
+  int len = msj.length() - 10;
+  msj.remove(len, 9);
+  switch(msj[5]){
+    case 'X':
+      msj.remove(0, 6);
+      GiroscopioApp[0] = msj.toFloat();
+      
+    case 'Y':
+      msj.remove(0, 6);
+      GiroscopioApp[1] = msj.toFloat();
+    case 'T':
+      msj.remove(0, 6);
+      GiroscopioApp[2] = msj.toFloat();
+    case 'F':
+      msj.remove(0, 6);
+      GiroscopioApp[3] = msj.toFloat();
+    case 'W':
+      msj.remove(0, 6);
+      GiroscopioApp[4] = msj.toFloat();  
+  }
+}
 void MotorStart(){
   pinMode(M1,OUTPUT);
   pinMode(M2,OUTPUT);
@@ -75,13 +97,14 @@ void MotorStart(){
   // ^^ TERMINA OPCIONAL ^^
 }
 void WifiConection(){
-  /*
+ 
+    /*
   COMMANDS RECIEVED:
   X = X
   Y = Y
   T = Thumb
-  0X = Cero click X
-  0Y = Cero click Y
+  F = Cero click X
+  W = Cero click Y
   T  = Ready?
   B  = Battery level request
 
@@ -89,65 +112,23 @@ void WifiConection(){
   ^^  M1  M2 ^^
   ^^  M3  M4 ^^
   */
-
   WiFiClient client = server.available();
-  client.println("HTTP/1.1 200 OK");
-  if(client){
-    lastTime = millis();
-    //Serial.println("Nuevo cliente");
-    String currentLine = "";
-   
-    while(client.connected() && millis() - lastTime <= timeout){
-
-      if(client.available()){
-       
+  //client.println(bat);
+  //for(int i=0; i5; i++){
+    if(client.available()){
+      while(client.connected()){
         char c = client.read();
-        Serial.write(c);        
-        header += c;
-       
-        if(c == '\n'){
-          if(currentLine.length() == 0){
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-type:text/html");
-            client.println("Connection: close");
-            client.println();
-            
-            if (header.indexOf("/T") >= 0) {
-              String st1 = "Con@";
-              String st2 = st1 + bat;
-              Serial.println("Conect");
-              client.println(st2);}
-
-            if (header.indexOf("/B") >= 0) {
-              String st1 = "Con@";
-              String st2 = st1 + bat;
-              Serial.println("Nivel de bateria");
-              client.println(st2);
-              }  
-            /*
-            if (header ) {
-              temp = client.read();
-              Trim(1);
-              }                        
-            else if (header("/01-") >= 0) {
-              temp = client.read();
-              Trim(1);}*/
-           
-            break;}
-           
-          else{
-            currentLine = ".";
-          }
+        msj += c;
+        if(c == '\n'){break;}
         }
-        else if ( c != '\r'){
-          currentLine += c;
-        }  
+        //Serial.println(msj);
+        clasify();
+        client.println(".");
+        msj="";
+        delay(1);  
       }
-    }
+  //}
 
-    header = "";
-    client.stop();
-  }
 }
 void PIDAdder(){
   PW[0] = (PWRoll[0] + PWPitch[0] + PWYaw[0])/3;  
