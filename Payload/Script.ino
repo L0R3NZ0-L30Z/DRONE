@@ -1,11 +1,15 @@
 //PINES DISPONIBLES 14 ,17, 19, 21, 22, 23.
-
+/*
+  SOBRE LA POSICION DE LOS MOTORES":
+  ^^  M1  M2 ^^
+  ^^  M3  M4 ^^
+*/
 #include <WiFi.h>
 WiFiServer server(80);
 
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
 const char* password = "PASS";              //REMPLAZAR POR CONTRA
-String msj; 
+String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
 float Giroscopio[3] ={0,0,0};               //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON
@@ -28,7 +32,7 @@ int PWYaw[4] = {0,0,0,0};                   //VARIABLES DE YAW
 #define KpYaw   0                           //DEFINICION DE CONSTANTES PARA AJUSTE PID
 #define KiYaw   0                           //DEFINICION DE CONSTANTES PARA AJUSTE PID
 #define KdYaw   0                           //DEFINICION DE CONSTANTES PARA AJUSTE PID
-
+const float Pi = 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865;
 
 void WifiStart(){
   //Serial.print("Conectando a ");
@@ -97,20 +101,14 @@ void MotorStart(){
   // ^^ TERMINA OPCIONAL ^^
 }
 void WifiConection(){
- 
-    /*
+  /*
   COMMANDS RECIEVED:
   X = X
   Y = Y
   T = Thumb
   F = Cero click X
   W = Cero click Y
-  T  = Ready?
-  B  = Battery level request
 
-  SOBRE LA POSICION DE LOS MOTORES":
-  ^^  M1  M2 ^^
-  ^^  M3  M4 ^^
   */
   WiFiClient client = server.available();
   //client.println(bat);
@@ -142,15 +140,17 @@ void MotorDriver(){
   analogWrite(M3, PW[2]);
   analogWrite(M4, PW[3]);
 }
-
+float GtoDegrees(int val){
+  float res;
+  return res = 
+}
 
 void setup() {
-
   Serial.begin(115200);
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
   MotorStart();
   //pinMode(X, INPUT);                      //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
- 
+  
 }
 
 void loop() {                               //NO PONER DELAYS!!!!!!!
