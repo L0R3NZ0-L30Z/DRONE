@@ -12,16 +12,19 @@ const char* password = "PASS";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
-float Giroscopio[3] ={0,0,0};               //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON
-float GiroscopioApp[3] ={0,0,0};            //VARIABLE DE POSICION DE GIROSCOPIO DE LA APP
-unsigned long lastTime, timeout = 2000;
+float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON
+float GiroscopioApp[2] = {0,0};             //VARIABLE DE POSICION DE GIROSCOPIO DE LA APP
+float GiroZeroApp[2] = {0,0};               //VARIABLE DE POSICION INICIAL DE LA APP
+float sliderApp = 0;                        //VARAIBLE DEL SLIDER DE LA APP
+
+
 int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
 int PWRoll[4] = {0,0,0,0};                  //VARIABLES DE ROLL 
 int PWPitch[4] = {0,0,0,0};                 //VARIABLES DE PITCH
 int PWYaw[4] = {0,0,0,0};                   //VARIABLES DE YAW
 #define M1 12                               //DEFINICION DE MOTORES
 #define M2 14                               //DEFINICION DE MOTORES
-#define M3 26                               //DEFINICION DE MOTORES
+#define M3 26                               //DEFINICION DE MOTOREaS
 #define M4 27                               //DEFINICION DE MOTORES
 #define KpRoll   0                          //DEFINICION DE CONSTANTES PARA AJUSTE PID
 #define KiRoll   0                          //DEFINICION DE CONSTANTES PARA AJUSTE PID
@@ -52,19 +55,18 @@ void clasify(){
     case 'X':
       msj.remove(0, 6);
       GiroscopioApp[0] = msj.toFloat();
-      
     case 'Y':
       msj.remove(0, 6);
       GiroscopioApp[1] = msj.toFloat();
     case 'T':
       msj.remove(0, 6);
-      GiroscopioApp[2] = msj.toFloat();
+      sliderApp = msj.toFloat();
     case 'F':
       msj.remove(0, 6);
-      GiroscopioApp[3] = msj.toFloat();
+      GiroZeroApp[0] = msj.toFloat();
     case 'W':
       msj.remove(0, 6);
-      GiroscopioApp[4] = msj.toFloat();  
+      GiroZeroApp[1] = msj.toFloat();  
   }
 }
 void MotorStart(){
@@ -140,10 +142,15 @@ void MotorDriver(){
   analogWrite(M3, PW[2]);
   analogWrite(M4, PW[3]);
 }
-float GtoDegrees(int val){
-  float res;
-  return res = 
+void PIDRoll(){
+
+
 }
+void convert(){
+
+
+}
+
 
 void setup() {
   Serial.begin(115200);
@@ -160,7 +167,7 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   //PIDRoll();                              //PID ROLL
   //PIDPitch();                             //PID PITCH
   //PIDYaw();                               //PID YAW
-  PIDAdder();                               //SUMA DE LOS OUTPUT DE LOS PID
-  MotorDriver();
+  //PIDAdder();                               //SUMA DE LOS OUTPUT DE LOS PID
+  //MotorDriver();
   delay(2);                                //UNICO DELAY PARA DEJA PROCESAR
 }
