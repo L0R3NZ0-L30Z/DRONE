@@ -22,7 +22,9 @@ int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE D
 float PWRoll;                               //VARIABLES DE ROLL 
 float PWPitch;                              //VARIABLES DE PITCH
 float PWYaw;                                //VARIABLES DE YAW
-float pE;
+float RpE = 0;
+float PpE = 0;
+float YpE = 0;
 #define M1 12                               //DEFINICION DE MOTORES
 #define M2 14                               //DEFINICION DE MOTORES
 #define M3 26                               //DEFINICION DE MOTOREaS
@@ -131,23 +133,23 @@ void MotorDriver(){
 void PIDRoll(){
   float E = Giroscopio[0] - DatosApp[0];
   float Iout = Iout + (E * KiRoll);
-  PWRoll = (E * KpRoll) + ((E - pE) * KdRoll) + Iout;
-  pE = Giroscopio[0] - DatosApp[0];
+  PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + Iout;
+  RpE = Giroscopio[0] - DatosApp[0];
 }
 void PIDPitch(){
   float E = Giroscopio[1] - DatosApp[1];
   float Iout = Iout + (E * KiPitch);
-  PWPitch = (E * KpPitch) + ((E - pE) * KdPitch) + Iout;
-  pE = Giroscopio[1] - DatosApp[1];
+  PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + Iout;
+  PpE = Giroscopio[1] - DatosApp[1];
 }
 /*void PIDYaw(){
-  float E = Magnetometro;
+  float E = Magnetometro;1
   float Iout = Iout + (E * KiYaw);
-  PWYaw = (E * KpYaw) + ((E - pE) * KdYaw) + Iout;
-  pE = Magnetometro;
+  PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + Iout;
+  YpE = Magnetometro;
 }*/
 void PIDconvert(){
-
+  
 
 }
 
@@ -157,7 +159,6 @@ void setup() {
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
   MotorStart();
   //pinMode(X, INPUT);                      //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA}
-  pE = 0;
   
 }
 
