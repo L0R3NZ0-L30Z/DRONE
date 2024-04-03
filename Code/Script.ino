@@ -3,6 +3,9 @@
   SOBRE LA POSICION DE LOS MOTORES":
   ^^  M1  M2 ^^
   ^^  M3  M4 ^^
+  SOBRE EL GIROSCOPIO
+  X= ROLL
+  Y=PITCH
 */
 #include <WiFi.h>
 WiFiServer server(80);
@@ -12,13 +15,14 @@ const char* password = "PASS";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
-float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON
+float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON // X, Y
 float DatosApp[3] = {0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 
 int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
-int PWRoll[4] = {0,0,0,0};                  //VARIABLES DE ROLL 
-int PWPitch[4] = {0,0,0,0};                 //VARIABLES DE PITCH
-int PWYaw[4] = {0,0,0,0};                   //VARIABLES DE YAW
+float PWRoll;                               //VARIABLES DE ROLL 
+float PWPitch;                              //VARIABLES DE PITCH
+float PWYaw;                                //VARIABLES DE YAW
+float pE;
 #define M1 12                               //DEFINICION DE MOTORES
 #define M2 14                               //DEFINICION DE MOTORES
 #define M3 26                               //DEFINICION DE MOTOREaS
@@ -60,7 +64,6 @@ void clasify(){
       sliderApp = msj.toFloat();
   }
 }
-
 void MotorStart(){
   pinMode(M1,OUTPUT);
   pinMode(M2,OUTPUT);
@@ -126,10 +129,24 @@ void MotorDriver(){
   analogWrite(M4, PW[3]);
 }
 void PIDRoll(){
-
-
+  float E = Giroscopio[0] - DatosApp[0];
+  float Iout = Iout + (E * KiRoll);
+  PWRoll = (E * KpRoll) + ((E - pE) * KdRoll) + Iout;
+  pE = Giroscopio[0] - DatosApp[0];
 }
-void convert(){
+void PIDPitch(){
+  float E = Giroscopio[1] - DatosApp[1];
+  float Iout = Iout + (E * KiPitch);
+  PWPitch = (E * KpPitch) + ((E - pE) * KdPitch) + Iout;
+  pE = Giroscopio[1] - DatosApp[1];
+}
+/*void PIDYaw(){
+  float E = Magnetometro;
+  float Iout = Iout + (E * KiYaw);
+  PWYaw = (E * KpYaw) + ((E - pE) * KdYaw) + Iout;
+  pE = Magnetometro;
+}*/
+void PIDconvert(){
 
 
 }
@@ -139,7 +156,8 @@ void setup() {
   Serial.begin(115200);
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
   MotorStart();
-  //pinMode(X, INPUT);                      //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
+  //pinMode(X, INPUT);                      //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA}
+  pE = 0;
   
 }
 
@@ -150,7 +168,7 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   //PIDRoll();                              //PID ROLL
   //PIDPitch();                             //PID PITCH
   //PIDYaw();                               //PID YAW
-  //PIDAdder();                               //SUMA DE LOS OUTPUT DE LOS PID
+  //PIDconvert();                              //SUMA DE LOS OUTPUT DE LOS PID
   //MotorDriver();
   delay(2);                                //UNICO DELAY PARA DEJA PROCESAR
 }
