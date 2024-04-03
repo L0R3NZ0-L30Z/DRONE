@@ -13,10 +13,7 @@ String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIB
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
 float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON
-float GiroscopioApp[2] = {0,0};             //VARIABLE DE POSICION DE GIROSCOPIO DE LA APP
-float GiroZeroApp[2] = {0,0};               //VARIABLE DE POSICION INICIAL DE LA APP
-float sliderApp = 0;                        //VARAIBLE DEL SLIDER DE LA APP
-
+float DatosApp[3] = {0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 
 int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
 int PWRoll[4] = {0,0,0,0};                  //VARIABLES DE ROLL 
@@ -52,23 +49,18 @@ void clasify(){
   int len = msj.length() - 10;
   msj.remove(len, 9);
   switch(msj[5]){
-    case 'X':
+    case 'P':
       msj.remove(0, 6);
       GiroscopioApp[0] = msj.toFloat();
-    case 'Y':
+    case 'R':
       msj.remove(0, 6);
       GiroscopioApp[1] = msj.toFloat();
     case 'T':
       msj.remove(0, 6);
       sliderApp = msj.toFloat();
-    case 'F':
-      msj.remove(0, 6);
-      GiroZeroApp[0] = msj.toFloat();
-    case 'W':
-      msj.remove(0, 6);
-      GiroZeroApp[1] = msj.toFloat();  
   }
 }
+
 void MotorStart(){
   pinMode(M1,OUTPUT);
   pinMode(M2,OUTPUT);
@@ -103,15 +95,6 @@ void MotorStart(){
   // ^^ TERMINA OPCIONAL ^^
 }
 void WifiConection(){
-  /*
-  COMMANDS RECIEVED:
-  X = X
-  Y = Y
-  T = Thumb
-  F = Cero click X
-  W = Cero click Y
-
-  */
   WiFiClient client = server.available();
   //client.println(bat);
   //for(int i=0; i5; i++){
