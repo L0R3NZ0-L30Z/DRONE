@@ -7,6 +7,13 @@
   X= ROLL
   Y=PITCH
 */
+
+/*
+Advertencias:
+- Tener en cuenta que la posicion del giroscopio/*accelerometro y magnetometro hara que haya que 
+  redefinir la configuracion de los motores y demas varables.
+  
+*/
 #include <WiFi.h>
 WiFiServer server(80);
 
@@ -189,10 +196,10 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   WifiConection();                          //RECEPCION DE DATOS
   //Giro();                                 //INPUT DEL GIROSCOPIO
   //Magnetometro();                         //INPUT DEL MAGNETOMETRO
-  //PIDRoll();                              //PID ROLL
-  //PIDPitch();                             //PID PITCH
-  //PIDYaw();                               //PID YAW
-  //PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
-  //MotorDriver();
+  PIDRoll();                              //PID ROLL
+  PIDPitch();                             //PID PITCH
+  PIDYaw();                               //PID YAW
+  PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
+  MotorDriver();
   delay(2);                                //UNICO DELAY PARA DEJA PROCESAR
 }
