@@ -12,7 +12,7 @@
 Advertencias:
 - Tener en cuenta que la posicion del giroscopio/*accelerometro y magnetometro hara que haya que 
   redefinir la configuracion de los motores y demas varables.
-  
+
 */
 #include <WiFi.h>
 WiFiServer server(80);
@@ -177,10 +177,10 @@ void PIDconvert(){
     PW[2] = ((PWRoll * 25.5) + PW[2]) / 3;
   }
 
-  PW[0] = (Pw[0] + (DatosApp / PRDiv)) / 2; 
-  PW[1] = (Pw[1] + (DatosApp / PRDiv)) / 2; 
-  PW[2] = (Pw[2] + (DatosApp / PRDiv)) / 2; 
-  PW[3] = (Pw[3] + (DatosApp / PRDiv)) / 2; 
+  PW[0] = (Pw[0] + (DatosApp[3] / PRDiv)) / 2; 
+  PW[1] = (Pw[1] + (DatosApp[3] / PRDiv)) / 2; 
+  PW[2] = (Pw[2] + (DatosApp[3] / PRDiv)) / 2; 
+  PW[3] = (Pw[3] + (DatosApp[3] / PRDiv)) / 2; 
 }
 
 
