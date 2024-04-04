@@ -29,17 +29,16 @@ float YpE = 0;
 #define M2 14                               //DEFINICION DE MOTORES
 #define M3 26                               //DEFINICION DE MOTOREaS
 #define M4 27                               //DEFINICION DE MOTORES
-#define KpRoll   0                          //DEFINICION DE CONSTANTES PARA AJUSTE PID
-#define KiRoll   0                          //DEFINICION DE CONSTANTES PARA AJUSTE PID
-#define KdRoll   0                          //DEFINICION DE CONSTANTES PARA AJUSTE PID
-#define KpPitch   0                         //DEFINICION DE CONSTANTES PARA AJUSTE PID
-#define KiPitch   0                         //DEFINICION DE CONSTANTES PARA AJUSTE PID
-#define KdPitch   0                         //DEFINICION DE CONSTANTES PARA AJUSTE PID
-#define KpYaw   0                           //DEFINICION DE CONSTANTES PARA AJUSTE PID
-#define KiYaw   0                           //DEFINICION DE CONSTANTES PARA AJUSTE PID
-#define KdYaw   0                           //DEFINICION DE CONSTANTES PARA AJUSTE PID
-const float Pi = 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865;
-
+#define KpRoll   0                          //DEFINICION DE CONSTANTE PARA AJUSTE PID
+#define KiRoll   0                          //DEFINICION DE CONSTANTE PARA AJUSTE PID
+#define KdRoll   0                          //DEFINICION DE CONSTANTE PARA AJUSTE PID
+#define KpPitch   0                         //DEFINICION DE CONSTANTE PARA AJUSTE PID
+#define KiPitch   0                         //DEFINICION DE CONSTANTE PARA AJUSTE PID
+#define KdPitch   0                         //DEFINICION DE CONSTANTE PARA AJUSTE PID
+#define KpYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
+#define KiYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
+#define KdYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
+#define PRDiv 1                             //DEFINICION DE CONSTANTE PARA DIVIDIR LA ENTRADA DE LA POTENCIA
 void WifiStart(){
   //Serial.print("Conectando a ");
   //Serial.println(ssid);
@@ -118,12 +117,6 @@ void WifiConection(){
   //}
 
 }
-void PIDAdder(){
-  PW[0] = (PWRoll[0] + PWPitch[0] + PWYaw[0])/3;  
-  PW[1] = (PWRoll[1] + PWPitch[1] + PWYaw[1])/3;
-  PW[2] = (PWRoll[2] + PWPitch[2] + PWYaw[2])/3;
-  PW[3] = (PWRoll[3] + PWPitch[3] + PWYaw[3])/3;
-}
 void MotorDriver(){ 
   analogWrite(M1, PW[0]);
   analogWrite(M2, PW[1]);
@@ -132,25 +125,55 @@ void MotorDriver(){
 }
 void PIDRoll(){
   float E = Giroscopio[0] - DatosApp[0];
-  float Iout = Iout + (E * KiRoll);
-  PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + Iout;
+  float IoutRoll = IoutRoll + (E * KiRoll);
+  PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + IoutRoll;
   RpE = Giroscopio[0] - DatosApp[0];
 }
 void PIDPitch(){
   float E = Giroscopio[1] - DatosApp[1];
-  float Iout = Iout + (E * KiPitch);
-  PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + Iout;
+  float IoutPitch = IoutPitch + (E * KiPitch);
+  PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + IoutPitch;
   PpE = Giroscopio[1] - DatosApp[1];
 }
 /*void PIDYaw(){
   float E = Magnetometro;1
-  float Iout = Iout + (E * KiYaw);
-  PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + Iout;
+  float IoutYaw = Ioutyaw + (E * KiYaw);
+  PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + IoutYaw;
   YpE = Magnetometro;
 }*/
 void PIDconvert(){
-  
+  /*SOBRE LA POSICION DE LOS MOTORES":
+  ^^  M1  M2 ^^     ^^ PW[0]  PW[1] ^^
+  ^^  M3  M4 ^^     ^^ PW[2]  PW[3] ^^ */
+  if(PWRoll >= 0){
+    PW[0] = PWRoll * 25.5;
+    PW[2] = PWRoll * 25.5;
+  }
+  else if(PWRoll < 0){
+    PW[1] = PWRoll * 25.5;
+    PW[3] = PWRoll * 25.5;
+  }
+  if(PWPitch >= 0){
+    PW[0] = ((PWRoll * 25.5) + PW[0]) / 2;
+    PW[1] = ((PWRoll * 25.5) + PW[1]) / 2;
+  }
+  else if(PWPitch < 0){
+    PW[2] = ((PWRoll * 25.5) + PW[2]) / 2;
+    PW[3] = ((PWRoll * 25.5) + PW[3]) / 2;
+  }
+  else if(PWYaw >= 0){
+    PW[0] = ((PWRoll * 25.5) + PW[0]) / 3;
+    PW[3] = ((PWRoll * 25.5) + PW[3]) / 3;
+  }
+  else if(PWYaw < 0){
+    PW[1] = ((PWRoll * 25.5) + PW[1]) / 3;
+    PW[2] = ((PWRoll * 25.5) + PW[2]) / 3;
+  }
 
+  PW[0] = (Pw[0] + (DatosApp / PRDiv)) / 2; 
+  PW[1] = (Pw[1] + (DatosApp / PRDiv)) / 2; 
+  PW[2] = (Pw[2] + (DatosApp / PRDiv)) / 2; 
+  PW[3] = (Pw[3] + (DatosApp / PRDiv)) / 2; 
 }
 
 
@@ -169,7 +192,7 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   //PIDRoll();                              //PID ROLL
   //PIDPitch();                             //PID PITCH
   //PIDYaw();                               //PID YAW
-  //PIDconvert();                              //SUMA DE LOS OUTPUT DE LOS PID
+  //PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
   //MotorDriver();
   delay(2);                                //UNICO DELAY PARA DEJA PROCESAR
 }
