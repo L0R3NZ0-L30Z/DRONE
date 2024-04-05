@@ -17,13 +17,15 @@ Advertencias:
 #include <WiFi.h>
 WiFiServer server(80);
 
-const char* ssid = "SSID";                  //REMPLAZAR POR SSID
-const char* password = "PASS";              //REMPLAZAR POR CONTRA
+const char* ssid = "Iphone 5000";                  //REMPLAZAR POR SSID
+const char* password = "12345678";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
 float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON // X, Y
-float DatosApp[3] = {0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
+float DatosApp[3] = {0,0,5};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
+float DatT[10]={0};
+
 
 int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
 float PWRoll;                               //VARIABLES DE ROLL 
@@ -63,15 +65,25 @@ void clasify(){
   switch(msj[5]){
     case 'P':
       msj.remove(0, 6);
-      GiroscopioApp[0] = msj.toFloat();
+      DatosApp[0] = msj.toFloat();
     case 'R':
       msj.remove(0, 6);
-      GiroscopioApp[1] = msj.toFloat();
+      DatosApp[1] = msj.toFloat();
     case 'T':
       msj.remove(0, 6);
-      sliderApp = msj.toFloat();
+      //ProcessT(msj.toFloat());
   }
-}
+}/*
+void ProcessT(float var){
+  for(int i=9; i>=0; i++){
+    DatT[i]=DatT[i-1];
+  }
+  DatT[0]= var;
+  for(int o=0; o<=10; o++){
+    DatosApp[2] = DatT[o];}
+  DatosApp[2] =  DatosApp[2] / 10;
+  }*/
+  
 void MotorStart(){
   pinMode(M1,OUTPUT);
   pinMode(M2,OUTPUT);
@@ -177,17 +189,17 @@ void PIDconvert(){
     PW[2] = ((PWRoll * 25.5) + PW[2]) / 3;
   }
 
-  PW[0] = (Pw[0] + (DatosApp[3] / PRDiv)) / 2; 
-  PW[1] = (Pw[1] + (DatosApp[3] / PRDiv)) / 2; 
-  PW[2] = (Pw[2] + (DatosApp[3] / PRDiv)) / 2; 
-  PW[3] = (Pw[3] + (DatosApp[3] / PRDiv)) / 2; 
+  PW[0] = (PW[0] + (DatosApp[3] / PRDiv)) / 2; 
+  PW[1] = (PW[1] + (DatosApp[3] / PRDiv)) / 2; 
+  PW[2] = (PW[2] + (DatosApp[3] / PRDiv)) / 2; 
+  PW[3] = (PW[3] + (DatosApp[3] / PRDiv)) / 2; 
 }
 
 
 void setup() {
   Serial.begin(115200);
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
-  MotorStart();
+  //MotorStart();
   //pinMode(X, INPUT);                      //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA}
   
 }
@@ -196,10 +208,11 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   WifiConection();                          //RECEPCION DE DATOS
   //Giro();                                 //INPUT DEL GIROSCOPIO
   //Magnetometro();                         //INPUT DEL MAGNETOMETRO
-  PIDRoll();                              //PID ROLL
+  /*PIDRoll();                              //PID ROLL
   PIDPitch();                             //PID PITCH
   PIDYaw();                               //PID YAW
   PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
-  MotorDriver();
-  delay(2);                                //UNICO DELAY PARA DEJA PROCESAR
+  MotorDriver();*/
+  Serial.println(DatosApp[2]);
+  delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 }
