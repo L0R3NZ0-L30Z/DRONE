@@ -14,10 +14,24 @@ Advertencias:
   redefinir la configuracion de los motores y demas varables.
 
 */
+/*
+  INCLUIR:
+  WiFi.RSSI()
+
+  WiFi.setHostname(YOUR_NEW_HOSTNAME);
+
+  IPAddress local_IP(192, 168, 1, 184);
+  // Set your Gateway IP address
+  IPAddress gateway(192, 168, 1, 1);
+
+  IPAddress subnet(255, 255, 0, 0);
+  IPAddress primaryDNS(8, 8, 8, 8);   // optional
+  IPAddress secondaryDNS(8, 8, 4, 4); // optional
+*/
 #include <WiFi.h>
 WiFiServer server(80);
 
-const char* ssid = "Iphone 5000";                  //REMPLAZAR POR SSID
+const char* ssid = "SSID";                  //REMPLAZAR POR SSID
 const char* password = "12345678";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
@@ -51,6 +65,7 @@ float YpE = 0;
 void WifiStart(){
   //Serial.print("Conectando a ");
   //Serial.println(ssid);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid,password);
   while(WiFi.status() != WL_CONNECTED){
     delay(500);
@@ -60,8 +75,6 @@ void WifiStart(){
   server.begin();
 }
 void clasify(){
-  int len = msj.length() - 10;
-  msj.remove(len, 9);
   switch(msj[5]){
     case 'P':
       msj.remove(0, 6);
@@ -118,22 +131,24 @@ void MotorStart(){
   // ^^ TERMINA OPCIONAL ^^
 }
 void WifiConection(){
-  WiFiClient client = server.available();
+    WiFiClient client = server.available();
   //client.println(bat);
   //for(int i=0; i5; i++){
+  //client.println("GET /T HTTP/1.1\n\n")
     if(client.available()){
       while(client.connected()){
         char c = client.read();
-        msj += c;
         if(c == '\n'){break;}
+        msj += c;
+        
         }
-        //Serial.println(msj);
+        Serial.println(msj);
         clasify();
-        client.println(".");
         msj="";
         delay(1);  
       }
   //}
+
 
 }
 void MotorDriver(){ 
