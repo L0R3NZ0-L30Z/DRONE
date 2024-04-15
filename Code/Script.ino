@@ -86,16 +86,7 @@ void clasify(){
       msj.remove(0, 6);
       //ProcessT(msj.toFloat());
   }
-}/*
-void ProcessT(float var){
-  for(int i=9; i>=0; i++){
-    DatT[i]=DatT[i-1];
-  }
-  DatT[0]= var;
-  for(int o=0; o<=10; o++){
-    DatosApp[2] = DatT[o];}
-  DatosApp[2] =  DatosApp[2] / 10;
-  }*/
+}
   
 void MotorStart(){
   pinMode(M1,OUTPUT);
@@ -132,24 +123,18 @@ void MotorStart(){
 }
 void WifiConection(){
     WiFiClient client = server.available();
-  //client.println(bat);
-  //for(int i=0; i5; i++){
   //client.println("GET /T HTTP/1.1\n\n")
-    if(client.available()){
-      while(client.connected()){
-        char c = client.read();
-        if(c == '\n'){break;}
-        msj += c;
-        
-        }
-        Serial.println(msj);
-        clasify();
-        msj="";
-        delay(1);  
-      }
-  //}
-
-
+  client.println("GET /Res HTTP/1.1");
+  client.println("Host: " + string(WiFi.localIP()));
+  client.println("Connection: close");
+  client.println();
+  while(client.available()){
+    char c = client.read();
+    msj += c;
+    }
+    Serial.println(msj);
+    //clasify();
+    msj="";
 }
 void MotorDriver(){ 
   analogWrite(M1, PW[0]);
