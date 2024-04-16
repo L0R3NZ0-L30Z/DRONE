@@ -37,8 +37,7 @@ String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIB
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
 float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON // X, Y
-float DatosApp[3] = {0,0,5};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
-float DatT[10]={0};
+float DatosApp[5] = {0,0,0, 0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 
 
 int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
@@ -76,7 +75,33 @@ void WifiStart(){
   server.begin();
 }
 void clasify(){
-  /*INDEXOF90 PARA CLASIFICAR*/
+  /*/Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx*/
+  String var = "";
+  int a = msj.indexOf("Slider=");
+  int b = msj.indexOf("&XGyro=");
+  for(int i=a+7; i<=b; i++){var += msj[i];}
+  DatosApp[0] = float(var);
+  String var = "";
+  int a = msj.indexOf("&XGyro=");
+  int b = msj.indexOf("&YGyro=");
+  for(int i=a+7; i<=b; i++){var += msj[i];}
+  DatosApp[1] = float(var);
+  String var = "";
+  int a = msj.indexOf("&YGyro=");
+  int b = msj.indexOf("&0x=");
+  for(int i=a+7; i<=b; i++){var += msj[i];}
+  DatosApp[2] = float(var);
+  String var = "";
+  int a = msj.indexOf("&0x=");
+  int b = msj.indexOf("&0y=");
+  for(int i=a+3; i<=b; i++){var += msj[i];}
+  DatosApp[3] = float(var);
+  String var = "";
+  int a = msj.indexOf("&0y=");
+  int b = msj.indexOf("\0");
+  for(int i=a+3; i<=b; i++){var += msj[i];}
+  DatosApp[4] = float(var);
+  String var = "";
 }
   
 void MotorStart(){
@@ -115,16 +140,16 @@ void MotorStart(){
 void WifiConection(){
   WiFiClient client = server.available();
   //client.println("GET /T HTTP/1.1\n\n")
-  client.println("GET /Res HTTP/1.1");
+  client.println("GET /Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx HTTP/1.1");
   client.println("Host: " + String(WiFi.localIP()));
   client.println("Connection: close");
   client.println();
+  msj="";
   while(client.available()){
     char c = client.read();
     msj += c;
     }
     clasify();
-    msj="";
 }
 void MotorDriver(){ 
   analogWrite(M1, PW[0]);
