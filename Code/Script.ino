@@ -32,7 +32,7 @@ Advertencias:
 WiFiServer server(80);
 
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
-const char* password = "12345678";              //REMPLAZAR POR CONTRA
+const char* password = "PASS";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
@@ -69,23 +69,14 @@ void WifiStart(){
   WiFi.begin(ssid,password);
   while(WiFi.status() != WL_CONNECTED){
     delay(500);
-    Serial.print(".");}
+    Serial.print(".");
+    }
   Serial.println("Direccion IP: ");
   Serial.print(WiFi.localIP());
   server.begin();
 }
 void clasify(){
-  switch(msj[5]){
-    case 'P':
-      msj.remove(0, 6);
-      DatosApp[0] = msj.toFloat();
-    case 'R':
-      msj.remove(0, 6);
-      DatosApp[1] = msj.toFloat();
-    case 'T':
-      msj.remove(0, 6);
-      //ProcessT(msj.toFloat());
-  }
+  /*INDEXOF90 PARA CLASIFICAR*/
 }
   
 void MotorStart(){
@@ -122,18 +113,17 @@ void MotorStart(){
   // ^^ TERMINA OPCIONAL ^^
 }
 void WifiConection(){
-    WiFiClient client = server.available();
+  WiFiClient client = server.available();
   //client.println("GET /T HTTP/1.1\n\n")
   client.println("GET /Res HTTP/1.1");
-  client.println("Host: " + string(WiFi.localIP()));
+  client.println("Host: " + String(WiFi.localIP()));
   client.println("Connection: close");
   client.println();
   while(client.available()){
     char c = client.read();
     msj += c;
     }
-    Serial.println(msj);
-    //clasify();
+    clasify();
     msj="";
 }
 void MotorDriver(){ 
@@ -213,6 +203,6 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   PIDYaw();                               //PID YAW
   PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();*/
-  Serial.println(DatosApp[2]);
+  //Serial.println(DatosApp[2]);
   delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 }
