@@ -32,12 +32,12 @@ Advertencias:
 WiFiServer server(80);
 
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
-const char* password = "PASS";              //REMPLAZAR POR CONTRA
+const char* password = "PASSWORD";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
 float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON // X, Y
-float DatosApp[5] = {0,0,0, 0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
+float DatosApp[5] = {0,0,0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 
 
 int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
@@ -80,28 +80,28 @@ void clasify(){
   int a = msj.indexOf("Slider=");
   int b = msj.indexOf("&XGyro=");
   for(int i=a+7; i<=b; i++){var += msj[i];}
-  DatosApp[0] = float(var);
-  String var = "";
-  int a = msj.indexOf("&XGyro=");
-  int b = msj.indexOf("&YGyro=");
+  DatosApp[0] = var.toFloat();
+  var = "";
+  a = msj.indexOf("&XGyro=");
+  b = msj.indexOf("&YGyro=");
   for(int i=a+7; i<=b; i++){var += msj[i];}
-  DatosApp[1] = float(var);
-  String var = "";
-  int a = msj.indexOf("&YGyro=");
-  int b = msj.indexOf("&0x=");
+  DatosApp[1] = var.toFloat();
+  var = "";
+  a = msj.indexOf("&YGyro=");
+  b = msj.indexOf("&0x=");
   for(int i=a+7; i<=b; i++){var += msj[i];}
-  DatosApp[2] = float(var);
-  String var = "";
-  int a = msj.indexOf("&0x=");
-  int b = msj.indexOf("&0y=");
+  DatosApp[2] = var.toFloat();
+  var = "";
+  a = msj.indexOf("&0x=");
+  b = msj.indexOf("&0y=");
   for(int i=a+3; i<=b; i++){var += msj[i];}
-  DatosApp[3] = float(var);
-  String var = "";
-  int a = msj.indexOf("&0y=");
-  int b = msj.indexOf("\0");
+  DatosApp[3] = var.toFloat();
+  var = "";
+  a = msj.indexOf("&0y=");
+  b = msj.indexOf("\0");
   for(int i=a+3; i<=b; i++){var += msj[i];}
-  DatosApp[4] = float(var);
-  String var = "";
+  DatosApp[4] = var.toFloat();
+  var = "";
 }
   
 void MotorStart(){
@@ -228,6 +228,6 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   PIDYaw();                               //PID YAW
   PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();*/
-  //Serial.println(DatosApp[2]);
+  Serial.println(DatosApp[0]);
   delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 }
