@@ -35,13 +35,12 @@ Advertencias:
 WiFiServer server(80);
 
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
-const char* password = "12345678";              //REMPLAZAR POR CONTRA
+const char* password = "PASSWORD";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
 float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON // X, Y
-float DatosApp[3] = {0,0,5};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
-float DatT[10]={0};
+float DatosApp[5] = {0,0,0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 
 
 int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
@@ -72,23 +71,40 @@ void WifiStart(){
   WiFi.begin(ssid,password);
   while(WiFi.status() != WL_CONNECTED){
     delay(500);
-    Serial.print(".");}
+    Serial.print(".");
+    }
   Serial.println("Direccion IP: ");
   Serial.print(WiFi.localIP());
   server.begin();
 }
 void clasify(){
-  switch(msj[5]){
-    case 'P':
-      msj.remove(0, 6);
-      DatosApp[0] = msj.toFloat();
-    case 'R':
-      msj.remove(0, 6);
-      DatosApp[1] = msj.toFloat();
-    case 'T':
-      msj.remove(0, 6);
-      //ProcessT(msj.toFloat());
-  }
+  /*/Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx*/
+  String var = "";
+  int a = msj.indexOf("Slider=");
+  int b = msj.indexOf("&XGyro=");
+  for(int i=a+7; i<=b; i++){var += msj[i];}
+  DatosApp[0] = var.toFloat();
+  var = "";
+  a = msj.indexOf("&XGyro=");
+  b = msj.indexOf("&YGyro=");
+  for(int i=a+7; i<=b; i++){var += msj[i];}
+  DatosApp[1] = var.toFloat();
+  var = "";
+  a = msj.indexOf("&YGyro=");
+  b = msj.indexOf("&0x=");
+  for(int i=a+7; i<=b; i++){var += msj[i];}
+  DatosApp[2] = var.toFloat();
+  var = "";
+  a = msj.indexOf("&0x=");
+  b = msj.indexOf("&0y=");
+  for(int i=a+3; i<=b; i++){var += msj[i];}
+  DatosApp[3] = var.toFloat();
+  var = "";
+  a = msj.indexOf("&0y=");
+  b = msj.indexOf("\0");
+  for(int i=a+3; i<=b; i++){var += msj[i];}
+  DatosApp[4] = var.toFloat();
+  var = "";
 }
 void MotorStart(){
   pinMode(M1,OUTPUT);
@@ -124,25 +140,18 @@ void MotorStart(){
   // ^^ TERMINA OPCIONAL ^^
 }
 void WifiConection(){
-    WiFiClient client = server.available();
-  //client.println(bat);
-  //for(int i=0; i5; i++){
+  WiFiClient client = server.available();
   //client.println("GET /T HTTP/1.1\n\n")
-    if(client.available()){
-      while(client.connected()){
-        char c = client.read();
-        if(c == '\n'){break;}
-        msj += c;
-        
-        }
-        Serial.println(msj);
-        clasify();
-        msj="";
-        delay(1);  
-      }
-  //}
-
-
+  client.println("GET /Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx HTTP/1.1");
+  client.println("Host: " + String(WiFi.localIP()));
+  client.println("Connection: close");
+  client.println();
+  msj="";
+  while(client.available()){
+    char c = client.read();
+    msj += c;
+    }
+    clasify();
 }
 void MotorDriver(){ 
   analogWrite(M1, PW[0]);
@@ -286,6 +295,6 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   PIDYaw();                               //PID YAW
   PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();*/
-  Serial.println(DatosApp[2]);
+  Serial.println(DatosApp[0]);
   delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 }
