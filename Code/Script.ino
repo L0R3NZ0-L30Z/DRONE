@@ -29,14 +29,15 @@ Advertencias:
   IPAddress secondaryDNS(8, 8, 4, 4); // optional
 */
 #include <WiFi.h>
-#include "I2Cdev.h"
-#include "MPU6050.h"
+//#include "I2Cdev.h"
+//#include "MPU6050.h"
 #include "Wire.h"
 WiFiServer server(80);
 
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
 const char* password = "PASSWORD";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
+int TimingVar=0;
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
 float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON // X, Y
@@ -77,34 +78,51 @@ void WifiStart(){
   Serial.print(WiFi.localIP());
   server.begin();
 }
-void clasify(){
-  /*/Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx*/
+void assign(){
   String var = "";
-  int a = msj.indexOf("Slider=");
-  int b = msj.indexOf("&XGyro=");
-  for(int i=a+7; i<=b; i++){var += msj[i];}
-  DatosApp[0] = var.toFloat();
+  int i;
+  for(i=24; msj[i]!='&'; i++){var += msj[i];}
+  Serial.print(var);
+  Serial.print(","); 
+  DatosApp[0]= var.toFloat();
   var = "";
-  a = msj.indexOf("&XGyro=");
-  b = msj.indexOf("&YGyro=");
-  for(int i=a+7; i<=b; i++){var += msj[i];}
-  DatosApp[1] = var.toFloat();
+  int o= i + 7;
+  for(i=o; msj[i]!='&'; i++){var += msj[i];}
+  Serial.print(var);
+  Serial.print(","); 
+  DatosApp[1]= var.toFloat();
   var = "";
-  a = msj.indexOf("&YGyro=");
-  b = msj.indexOf("&0x=");
-  for(int i=a+7; i<=b; i++){var += msj[i];}
-  DatosApp[2] = var.toFloat();
+  /*o= i + 7;
+  for(i=o; msj[i]!='&'; i++){var += msj[i];}
+  Serial.println(var);
+  Serial.print("\t");
+  DatosApp[2]= var.toFloat();
   var = "";
-  a = msj.indexOf("&0x=");
-  b = msj.indexOf("&0y=");
-  for(int i=a+3; i<=b; i++){var += msj[i];}
-  DatosApp[3] = var.toFloat();
+  o= i + 4;
+  for(i=o; msj[i]!='&'; i++){var += msj[i];}
+  Serial.println(var);
+  Serial.print("\t");
+  DatosApp[2]= var.toFloat();
   var = "";
-  a = msj.indexOf("&0y=");
-  b = msj.indexOf("\0");
-  for(int i=a+3; i<=b; i++){var += msj[i];}
-  DatosApp[4] = var.toFloat();
+  o= i + 4;
+  for(i=o; msj[i]!='&'; i++){var += msj[i];}
+  Serial.println(var);
+  Serial.print("\t");
+  DatosApp[2]= var.toFloat();
   var = "";
+  */
+  }
+void clasify(){
+  /*GET /Res?ID=1205&Slider=165.75&XGyro=0.04875&YGyro=0.04875&0x=-0.06&0y=0.015 HTTP/1.1*/
+  int temp;
+  String var = "";
+  for(int i=12; i!=16; i++){var += msj[i];}
+  temp = var.toInt();
+  //Serial.println(var);
+  if(TimingVar>9500 && temp<1050){assign();}
+  else if(TimingVar<temp){assign();}
+  TimingVar=temp;
+ 
 }
 void MotorStart(){
   pinMode(M1,OUTPUT);
@@ -140,6 +158,7 @@ void MotorStart(){
   // ^^ TERMINA OPCIONAL ^^
 }
 void WifiConection(){
+  int cont=0;
   WiFiClient client = server.available();
   //client.println("GET /T HTTP/1.1\n\n")
   client.println("GET /Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx HTTP/1.1");
@@ -149,8 +168,11 @@ void WifiConection(){
   msj="";
   while(client.available()){
     char c = client.read();
+    if(c=='\n'){break;}
     msj += c;
+    cont++;
     }
+    //Serial.println(msj);
     clasify();
 }
 void MotorDriver(){ 
@@ -211,8 +233,8 @@ void PIDconvert(){
   PW[2] = (PW[2] + (DatosApp[3] / PRDiv)) / 2; 
   PW[3] = (PW[3] + (DatosApp[3] / PRDiv)) / 2; 
 }
-void incialicia_Gyro(){
-  
+/*void incialicia_Gyro(){
+
 
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -275,12 +297,12 @@ void lectura(){
    // blink LED to indicate activity
     //blinkState = !blinkState;
     //digitalWrite(LED_PIN, blinkState);
-    }
+    }-*/
 
 void setup() {
   Serial.begin(115200);
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
-  incialicia_Gyro();
+  //incialicia_Gyro();
   //MotorStart();
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
   
@@ -295,6 +317,6 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   PIDYaw();                               //PID YAW
   PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();*/
-  Serial.println(DatosApp[0]);
+  //Serial.println(DatosApp[0]);
   delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 }
