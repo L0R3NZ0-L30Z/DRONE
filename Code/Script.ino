@@ -82,35 +82,38 @@ void assign(){
   
   String var = "";
   int i;
-  for(i=24; msj[i]!='&'; i++){var += msj[i];}
+  int cont=24;
+  for(i=24; msj[i]!='&'; i++){var += msj[i];cont++;}
   Serial.print("Slider: "); Serial.print(var); Serial.print("  ");
   DatosApp[0]= var.toFloat();
   var = "";
-  int o= i + 7;
-  for(i=o; msj[i]!='&'; i++){var += msj[i];}
+  cont = cont + 7;
+  for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
   Serial.print("Gyro X Axis: "); Serial.print(var); Serial.print("  "); 
-  Serial.println("uT");
   DatosApp[1]= var.toFloat();
   var = "";
-  /*o= i + 7;
-  for(i=o; msj[i]!='&'; i++){var += msj[i];}
-  Serial.println(var);
-  Serial.print("\t");
+////////////////////////////////
+  
+  cont = cont + 7;
+  for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
+  Serial.print("Gyro Y Axis: "); Serial.print(var); Serial.print("  "); 
+  
   DatosApp[2]= var.toFloat();
   var = "";
-  o= i + 4;
-  for(i=o; msj[i]!='&'; i++){var += msj[i];}
-  Serial.println(var);
-  Serial.print("\t");
+  
+  cont = cont + 7;
+  for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
+  Serial.print("Zero Y Axis: "); Serial.print(var); Serial.print("  "); 
   DatosApp[2]= var.toFloat();
   var = "";
-  o= i + 4;
-  for(i=o; msj[i]!='&'; i++){var += msj[i];}
-  Serial.println(var);
-  Serial.print("\t");
+  
+  cont = cont + 7;
+  for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
+  Serial.print("Zero Y Axis: "); Serial.print(var); Serial.print("  "); 
+  Serial.println("uT");
   DatosApp[2]= var.toFloat();
   var = "";
-  */
+  
   }
 void clasify(){
   /*GET /Res?ID=1205&Slider=165.75&XGyro=0.04875&YGyro=0.04875&0x=-0.06&0y=0.015 HTTP/1.1*/
@@ -199,6 +202,7 @@ void PIDPitch(){
   YpE = Magnetometro;
 }*/
 void PIDconvert(){
+  //A CHEKEAR
   /*SOBRE LA POSICION DE LOS MOTORES":
   ^^  M1  M2 ^^     ^^ PW[0]  PW[1] ^^
   ^^  M3  M4 ^^     ^^ PW[2]  PW[3] ^^ */
