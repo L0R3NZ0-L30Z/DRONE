@@ -79,17 +79,17 @@ void WifiStart(){
   server.begin();
 }
 void assign(){
+  
   String var = "";
   int i;
   for(i=24; msj[i]!='&'; i++){var += msj[i];}
-  Serial.print(var);
-  Serial.print(","); 
+  Serial.print("Slider: "); Serial.print(var); Serial.print("  ");
   DatosApp[0]= var.toFloat();
   var = "";
   int o= i + 7;
   for(i=o; msj[i]!='&'; i++){var += msj[i];}
-  Serial.print(var);
-  Serial.print(","); 
+  Serial.print("Gyro X Axis: "); Serial.print(var); Serial.print("  "); 
+  Serial.println("uT");
   DatosApp[1]= var.toFloat();
   var = "";
   /*o= i + 7;
@@ -118,9 +118,8 @@ void clasify(){
   String var = "";
   for(int i=12; i!=16; i++){var += msj[i];}
   temp = var.toInt();
-  //Serial.println(var);
-  if(TimingVar>9500 && temp<1050){assign();}
-  else if(TimingVar<temp){assign();}
+  if(TimingVar>9500 && temp<1050){Serial.println(var);assign();}
+  else if(TimingVar<temp){Serial.println(var);assign();}
   TimingVar=temp;
  
 }
