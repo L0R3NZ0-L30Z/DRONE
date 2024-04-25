@@ -37,7 +37,7 @@ WiFiServer server(80);
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
 const char* password = "PASSWORD";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
-int TimingVar=0;
+int TimingVar=950;
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
 float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON // X, Y
@@ -65,21 +65,16 @@ float YpE = 0;
 #define KiYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
 #define KdYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
 #define PRDiv 1                             //DEFINICION DE CONSTANTE PARA DIVIDIR LA ENTRADA DE LA POTENCIA
+
 void WifiStart(){
-  //Serial.print("Conectando a ");
-  //Serial.println(ssid);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid,password);
-  while(WiFi.status() != WL_CONNECTED){
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
-    }
-  Serial.println("Direccion IP: ");
-  Serial.print(WiFi.localIP());
+  }
   server.begin();
 }
 void assign(){
-  
   String var = "";
   int i;
   int cont=24;
@@ -97,18 +92,17 @@ void assign(){
   cont = cont + 7;
   for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
   Serial.print("Gyro Y Axis: "); Serial.print(var); Serial.print("  "); 
-  
   DatosApp[2]= var.toFloat();
   var = "";
   
-  cont = cont + 7;
+  cont = cont + 4;
   for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
   Serial.print("Zero Y Axis: "); Serial.print(var); Serial.print("  "); 
   DatosApp[2]= var.toFloat();
   var = "";
   
-  cont = cont + 7;
-  for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
+  cont = cont + 4;
+  for(i=cont; msj[i]!='\0'; i++){var += msj[i];cont++;}
   Serial.print("Zero Y Axis: "); Serial.print(var); Serial.print("  "); 
   Serial.println("uT");
   DatosApp[2]= var.toFloat();
@@ -119,11 +113,11 @@ void clasify(){
   /*GET /Res?ID=1205&Slider=165.75&XGyro=0.04875&YGyro=0.04875&0x=-0.06&0y=0.015 HTTP/1.1*/
   int temp;
   String var = "";
-  for(int i=12; i!=16; i++){var += msj[i];}
+  for(int i=12; i!='&'; i++){var += msj[i];}
   temp = var.toInt();
-  if(TimingVar>9500 && temp<1050){Serial.println(var);assign();}
-  else if(TimingVar<temp){Serial.println(var);assign();}
-  TimingVar=temp;
+  if(TimingVar<temp && temp<TimingVar + 100){Serial.println(var);assign();TimingVar=temp;}
+  if(TimingVar>9950 && temp<1050){Serial.println(var);assign();TimingVar=temp;}
+  
  
 }
 void MotorStart(){
@@ -160,29 +154,20 @@ void MotorStart(){
   // ^^ TERMINA OPCIONAL ^^
 }
 void WifiConection(){
-  int cont=0;
   WiFiClient client = server.available();
-  //client.println("GET /T HTTP/1.1\n\n")
   client.println("GET /Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx HTTP/1.1");
   client.println("Host: " + String(WiFi.localIP()));
   client.println("Connection: close");
   client.println();
-  msj="";
-  while(client.available()){
-    char c = client.read();
-    if(c=='\n'){break;}
-    msj += c;
-    cont++;
-    }
-    //Serial.println(msj);
-    clasify();
+  String msj = client.readStringUntil('\n');
+  //Serial.println(msj);
+  clasify();
 }
 void MotorDriver(){ 
-  analogWrite(M1, PW[0]);
-  analogWrite(M2, PW[1]);
-  analogWrite(M3, PW[2]);
-  analogWrite(M4, PW[3]);
-}
+  for (int i = 0; i < 4; ++i) {
+    analogWrite(M1 + i, PW[i]);
+    }
+ }
 void PIDRoll(){
   float E = Giroscopio[0] - DatosApp[0];
   float IoutRoll = IoutRoll + (E * KiRoll);
