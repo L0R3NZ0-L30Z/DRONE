@@ -40,6 +40,9 @@ String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIB
 int TimingVar=950;
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
+float AnglePitchX;
+float AnglePitchY;
+float ax, ay;
 float DatosApp[5] = {0,0,0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 
 
@@ -64,6 +67,7 @@ float YpE = 0;
 #define KiYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
 #define KdYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
 #define PRDiv 1                             //DEFINICION DE CONSTANTE PARA DIVIDIR LA ENTRADA DE LA POTENCIA
+#define ConstProportional 25.992883792      //DEFINICION DE CONSTANTE PARA AJUSTAR LA SALIDA DEL PID
 
 void WifiStart(){
   WiFi.mode(WIFI_STA);
@@ -125,6 +129,55 @@ void clasify(){
     TimingVar=temp;
   } 
 }
+void Sensor(float &ax, float &ay){
+  // Get new sensor events with the readings
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+ 
+  // Print out the values
+  /*
+  Serial.print("Acceleration X: ");
+  Serial.print(a.acceleration.x);
+  Serial.print(", Y: ");
+  Serial.print(a.acceleration.y);
+  Serial.print(", Z: ");
+  Serial.print(a.acceleration.z);
+  Serial.println(" m/s^2");
+
+  Serial.print("Rotation X: ");
+  Serial.print(g.gyro.x);
+  Serial.print(", Y: ");
+  Serial.print(g.gyro.y);
+  Serial.print(", Z: ");
+  Serial.print(g.gyro.z);
+  Serial.println(" rad/s");
+
+  Serial.print("Temperature: ");
+  Serial.print(temp.temperature);
+  Serial.println(" degC");*/
+
+  //AnglePitchX=-atan(a.acceleration.x/sqrt(a.acceleration.y*a.acceleration.y+a.acceleration.z*
+  //a.acceleration.z))*1/(3.142/180);
+  // Print out the values
+  /*
+  Serial.print("Angle X: ");
+  Serial.print(AnglePitchX);
+  Serial.println(" °c");
+  */
+  //AnglePitchY=-atan(a.acceleration.y/sqrt(a.acceleration.x*a.acceleration.x+a.acceleration.z*
+  //a.acceleration.z))*1/(3.142/180);
+  // Print out the values
+  /*
+  Serial.print("Angle Y: ");
+  Serial.print(AnglePitchY);
+  Serial.println(" °c");
+ 
+  Serial.println("");*/
+  //delay(500);
+
+  ax = a.acceleration.x;
+  ay = a.acceleration.y;
+}
 void MotorStart(){
   pinMode(M1,OUTPUT);
   pinMode(M2,OUTPUT);
@@ -164,7 +217,7 @@ void WifiConection(){
   client.println("Host: " + String(WiFi.localIP()));
   client.println("Connection: close");
   client.println();
-  String msj = client.readStringUntil('\n');
+  msj = client.readStringUntil('\n');
   //Serial.println(msj);
   clasify();
 }
@@ -197,28 +250,28 @@ void PIDconvert(){
   ^^  M1  M2 ^^     ^^ PW[0]  PW[1] ^^
   ^^  M3  M4 ^^     ^^ PW[2]  PW[3] ^^ */
   if(PWRoll >= 0){
-    PW[0] = PWRoll * 25.5;
-    PW[2] = PWRoll * 25.5;
+    PW[0] = PWRoll * ConstProportional;
+    PW[2] = PWRoll * ConstProportional;
   }
   else if(PWRoll < 0){
-    PW[1] = PWRoll * 25.5;
-    PW[3] = PWRoll * 25.5;
+    PW[1] = PWRoll * ConstProportional;
+    PW[3] = PWRoll * ConstProportional;
   }
   if(PWPitch >= 0){
-    PW[0] = ((PWRoll * 25.5) + PW[0]) / 2;
-    PW[1] = ((PWRoll * 25.5) + PW[1]) / 2;
+    PW[0] = ((PWRoll * ConstProportional) + PW[0]) / 2;
+    PW[1] = ((PWRoll * ConstProportional) + PW[1]) / 2;
   }
   else if(PWPitch < 0){
-    PW[2] = ((PWRoll * 25.5) + PW[2]) / 2;
-    PW[3] = ((PWRoll * 25.5) + PW[3]) / 2;
+    PW[2] = ((PWRoll * ConstProportional) + PW[2]) / 2;
+    PW[3] = ((PWRoll * ConstProportional) + PW[3]) / 2;
   }
   else if(PWYaw >= 0){
-    PW[0] = ((PWRoll * 25.5) + PW[0]) / 3;
-    PW[3] = ((PWRoll * 25.5) + PW[3]) / 3;
+    PW[0] = ((PWRoll * ConstProportional) + PW[0]) / 3;
+    PW[3] = ((PWRoll * ConstProportional) + PW[3]) / 3;
   }
   else if(PWYaw < 0){
-    PW[1] = ((PWRoll * 25.5) + PW[1]) / 3;
-    PW[2] = ((PWRoll * 25.5) + PW[2]) / 3;
+    PW[1] = ((PWRoll * ConstProportional) + PW[1]) / 3;
+    PW[2] = ((PWRoll * ConstProportional) + PW[2]) / 3;
   }
 
   PW[0] = (PW[0] + (DatosApp[3] / PRDiv)) / 2; 
@@ -298,6 +351,77 @@ void setup() {
   //incialicia_Gyro();
   //MotorStart();
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
+
+    if (!mpu.begin()) {
+    //Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  //Serial.println("MPU6050 Found!");
+
+  mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+  /*Serial.print("Accelerometer range set to: ");
+  switch (mpu.getAccelerometerRange()) {
+  case MPU6050_RANGE_2_G:
+    Serial.println("+-2G");
+    break;
+  case MPU6050_RANGE_4_G:
+    Serial.println("+-4G");
+    break;
+  case MPU6050_RANGE_8_G:
+    Serial.println("+-8G");
+    break;
+  case MPU6050_RANGE_16_G:
+    Serial.println("+-16G");
+    break;
+  }*/
+ 
+  mpu.setGyroRange(MPU6050_RANGE_2000_DEG);
+  /*Serial.print("Gyro range set to: ");
+  switch (mpu.getGyroRange()) {
+  case MPU6050_RANGE_250_DEG:
+    Serial.println("+- 250 deg/s");
+    break;
+  case MPU6050_RANGE_500_DEG:
+    Serial.println("+- 500 deg/s");
+    break;
+  case MPU6050_RANGE_1000_DEG:
+    Serial.println("+- 1000 deg/s");
+    break;
+  case MPU6050_RANGE_2000_DEG:
+    Serial.println("+- 2000 deg/s");
+    break;
+  }*/
+
+  mpu.setFilterBandwidth(MPU6050_BAND_260_HZ);
+  /*Serial.print("Filter bandwidth set to: ");
+  switch (mpu.getFilterBandwidth()) {
+  case MPU6050_BAND_260_HZ:
+    Serial.println("260 Hz");
+    break;
+  case MPU6050_BAND_184_HZ:
+    Serial.println("184 Hz");
+    break;
+  case MPU6050_BAND_94_HZ:
+    Serial.println("94 Hz");
+    break;
+  case MPU6050_BAND_44_HZ:
+    Serial.println("44 Hz");
+    break;
+  case MPU6050_BAND_21_HZ:
+    Serial.println("21 Hz");
+    break;
+  case MPU6050_BAND_10_HZ:
+    Serial.println("10 Hz");
+    break;
+  case MPU6050_BAND_5_HZ:
+    Serial.println("5 Hz");
+    break;
+  }
+
+  Serial.println("");*/
+  //delay(100);
   
 }
 
