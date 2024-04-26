@@ -40,7 +40,6 @@ String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIB
 int TimingVar=950;
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
-float Giroscopio[2] = {0,0};                //VARIABLE DE POSICION DE GIROSCOPIO DEL DRON // X, Y
 float DatosApp[5] = {0,0,0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 
 
@@ -82,12 +81,12 @@ void assign(){
   Serial.print("Slider: "); Serial.print(var); Serial.print("  ");
   DatosApp[0]= var.toFloat();
   var = "";
+
   cont = cont + 7;
   for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
   Serial.print("Gyro X Axis: "); Serial.print(var); Serial.print("  "); 
   DatosApp[1]= var.toFloat();
   var = "";
-////////////////////////////////
   
   cont = cont + 7;
   for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
@@ -115,10 +114,16 @@ void clasify(){
   String var = "";
   for(int i=12; i!='&'; i++){var += msj[i];}
   temp = var.toInt();
-  if(TimingVar<temp && temp<TimingVar + 100){Serial.println(var);assign();TimingVar=temp;}
-  if(TimingVar>9950 && temp<1050){Serial.println(var);assign();TimingVar=temp;}
-  
- 
+  if(TimingVar<temp && temp<TimingVar + 100){
+    Serial.println(var);
+    assign();
+    TimingVar=temp;
+  }
+  else if(TimingVar>9950 && temp<1050){
+    Serial.println(var);
+    assign();
+    TimingVar=temp;
+  } 
 }
 void MotorStart(){
   pinMode(M1,OUTPUT);
