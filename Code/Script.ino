@@ -114,6 +114,7 @@ void assign(){
   
   DatosApp[2]= var.toFloat();
   var = "";
+
   Serial.print("Slider: "); Serial.print(DatosApp[0]); Serial.print("  ");
   Serial.print("Gyro X Axis: "); Serial.print(DatosApp[1]); Serial.print("  "); 
   Serial.print("Gyro Y Axis: "); Serial.print(DatosApp[2]); Serial.print("  "); 
@@ -136,9 +137,11 @@ void clasify(){
     TimingVar=temp;
   } 
 }
-
 void MotorStart(){
-  myservo1.attach(servoPin, 1000, 2000); 
+  BrushlessM1.attach(M1, 1000, 2000); 
+  BrushlessM2.attach(M2, 1000, 2000); 
+  BrushlessM3.attach(M3, 1000, 2000); 
+  BrushlessM4.attach(M4, 1000, 2000); 
 }
 void WifiConection(){
   WiFiClient client = server.available();
@@ -151,11 +154,12 @@ void WifiConection(){
   clasify();
 }
 void MotorDriver(){ 
-  for (int i = 0; i < 4; ++i) {
-    analogWrite(M1 + i, PW[i]);
-    }
-    myservo.write(pos);
- }/*
+  BrushlessM1.write(PW[0]);
+  BrushlessM2.write(PW[1]);
+  BrushlessM3.write(PW[2]);
+  BrushlessM4.write(PW[3]);
+ }
+ /*
 void PIDRoll(){
   float E = Giroscopio[0] - DatosApp[0];
   float IoutRoll = IoutRoll + (E * KiRoll);
@@ -178,14 +182,13 @@ void setup() {
   Serial.begin(115200);
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
   //incialicia_Gyro();
-  //MotorStart();
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
   ESP32PWM::allocateTimer(0);
   ESP32PWM::allocateTimer(1);
   ESP32PWM::allocateTimer(2);
   ESP32PWM::allocateTimer(3);
   myservo.setPeriodHertz(50);    // standard 50 hz servo
-  myservo1.attach(servoPin, 1000, 2000);
+  MotorStart();
  
 }
 
@@ -193,11 +196,11 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   WifiConection();                          //RECEPCION DE DATOS
   //Giro();                                 //INPUT DEL GIROSCOPIO
   //Magnetometro();                         //INPUT DEL MAGNETOMETRO
-  /*PIDRoll();                              //PID ROLL
-  PIDPitch();                             //PID PITCH
-  PIDYaw();                               //PID YAW
-  PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
-  MotorDriver();*/
+  //PIDRoll();                              //PID ROLL
+  //PIDPitch();                             //PID PITCH
+  //PIDYaw();                               //PID YAW
+  //PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
+  MotorDriver();
   Serial.println(PW[0]);
   //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 }
