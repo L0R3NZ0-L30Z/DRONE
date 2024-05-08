@@ -79,7 +79,7 @@ void WifiStart(){
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.println(".");
+    Serial.print(".");
   }
   server.begin();
 }
@@ -106,24 +106,22 @@ void assign(){
   
   cont = cont + 4;
   for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
-  DatosApp[2]= var.toFloat();
+  DatosApp[3]= var.toFloat();
   var = "";
   
   cont = cont + 4;
   for(i=cont; msj[i]!='\0'; i++){var += msj[i];cont++;}
-  
-  DatosApp[2]= var.toFloat();
+  DatosApp[4]= var.toFloat();
   var = "";
-
   Serial.print("Slider: "); Serial.print(DatosApp[0]); Serial.print("  ");
   Serial.print("Gyro X Axis: "); Serial.print(DatosApp[1]); Serial.print("  "); 
   Serial.print("Gyro Y Axis: "); Serial.print(DatosApp[2]); Serial.print("  "); 
   Serial.print("Zero X Axis: "); Serial.print(DatosApp[3]); Serial.print("  "); 
   Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print("  "); 
   Serial.println("uT");
-  }
+}
 void clasify(){
-  /*GET /Res?ID=1205&Slider=165.75&XGyro=0.04875&YGyro=0.04875&0x=-0.06&0y=0.015 HTTP/1.1*/
+  /*GET /Res?ID=8896&Slider=0&XGyro=0.005&YGyro=0.015&0x=-2.6025&0y=3.82375 HTTP/1.1*/
   int temp;
   String var = "";
   for(int i=12; i!='&'; i++){var += msj[i];}
@@ -145,12 +143,22 @@ void MotorStart(){
 }
 void WifiConection(){
   WiFiClient client = server.available();
-  client.println("GET /Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx HTTP/1.1");
-  client.println("Host: " + String(WiFi.localIP()));
-  client.println("Connection: close");
-  client.println();
-  msj = client.readStringUntil('\n');
-  //Serial.println(msj);
+    if(client.available()){
+      while(client.connected()){
+        char c = client.read();
+        if(c == '\n'){
+          client.println("GET /Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx HTTP/1.1");
+          client.println("Host: " + String(WiFi.localIP()));
+          client.println("Connection: close");
+          client.println();
+          break;}
+          msj += c;
+        }
+        //Serial.println(msj);
+        clasify();
+        msj="";
+        //delay(1);  
+  }
   clasify();
 }
 void MotorDriver(){ 
@@ -187,7 +195,11 @@ void setup() {
   ESP32PWM::allocateTimer(1);
   ESP32PWM::allocateTimer(2);
   ESP32PWM::allocateTimer(3);
-  myservo.setPeriodHertz(50);    // standard 50 hz servo
+  
+  BrushlessM1.setPeriodHertz(50);    // standard 50 hz servo 
+  BrushlessM2.setPeriodHertz(50);  
+  BrushlessM3.setPeriodHertz(50);  
+  BrushlessM4.setPeriodHertz(50); 
   MotorStart();
  
 }
@@ -201,6 +213,6 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   //PIDYaw();                               //PID YAW
   //PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();
-  Serial.println(PW[0]);
+  //Serial.println(PW[0]);
   //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 }
