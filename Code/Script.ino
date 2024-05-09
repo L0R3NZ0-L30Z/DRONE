@@ -83,6 +83,47 @@ void WifiStart(){
   }
   server.begin();
 }
+void MotorStart(){
+  BrushlessM1.attach(M1, 1000, 2000); 
+  BrushlessM2.attach(M2, 1000, 2000); 
+  BrushlessM3.attach(M3, 1000, 2000); 
+  BrushlessM4.attach(M4, 1000, 2000); 
+}
+void WifiConection(){
+  WiFiClient client = server.available();
+    if(client.available()){
+      while(client.connected()){
+        char c = client.read();
+        if(c == '\n'){
+          client.println("GET /Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx HTTP/1.1");
+          client.println("Host: " + String(WiFi.localIP()));
+          client.println("Connection: close");
+          client.println();
+          break;}
+          msj += c;
+        }
+        //Serial.println(msj);
+        clasify();
+        msj="";
+        //delay(1);  
+  }
+  clasify();
+}
+void clasify(){
+  /*GET /Res?ID=8896&Slider=0&XGyro=0.005&YGyro=0.015&0x=-2.6025&0y=3.82375 HTTP/1.1*/
+  int temp;
+  String var = "";
+  for(int i=12; i!='&'; i++){var += msj[i];}
+  temp = var.toInt();
+  if(TimingVar<temp && temp<TimingVar + 8000){
+    assign();
+    TimingVar=temp;
+  }
+  else if(TimingVar>9950 && temp<1050){
+    assign();
+    TimingVar=temp;
+  } 
+}
 void assign(){
   String var = "";
   int i;
@@ -120,46 +161,38 @@ void assign(){
   Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print("  "); 
   Serial.println("uT");
 }
-void clasify(){
-  /*GET /Res?ID=8896&Slider=0&XGyro=0.005&YGyro=0.015&0x=-2.6025&0y=3.82375 HTTP/1.1*/
-  int temp;
-  String var = "";
-  for(int i=12; i!='&'; i++){var += msj[i];}
-  temp = var.toInt();
-  if(TimingVar<temp && temp<TimingVar + 8000){
-    assign();
-    TimingVar=temp;
-  }
-  else if(TimingVar>9950 && temp<1050){
-    assign();
-    TimingVar=temp;
-  } 
+void PIDRoll(){
+  float E = Giroscopio[0] - DatosApp[1];
+  float IoutRoll = IoutRoll + (E * KiRoll);
+  PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + IoutRoll;
+  RpE = Giroscopio[0] - DatosApp[1];
 }
-void MotorStart(){
-  BrushlessM1.attach(M1, 1000, 2000); 
-  BrushlessM2.attach(M2, 1000, 2000); 
-  BrushlessM3.attach(M3, 1000, 2000); 
-  BrushlessM4.attach(M4, 1000, 2000); 
+void PIDPitch(){
+  float E = Giroscopio[1] - DatosApp[2];
+  float IoutPitch = IoutPitch + (E * KiPitch);
+  PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + IoutPitch;
+  PpE = Giroscopio[1] - DatosApp[2];
 }
-void WifiConection(){
-  WiFiClient client = server.available();
-    if(client.available()){
-      while(client.connected()){
-        char c = client.read();
-        if(c == '\n'){
-          client.println("GET /Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx HTTP/1.1");
-          client.println("Host: " + String(WiFi.localIP()));
-          client.println("Connection: close");
-          client.println();
-          break;}
-          msj += c;
-        }
-        //Serial.println(msj);
-        clasify();
-        msj="";
-        //delay(1);  
-  }
-  clasify();
+void PIDYaw(){/*
+  float E = Magnetometro;
+  float IoutYaw = Ioutyaw + (E * KiYaw);
+  PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + IoutYaw;
+  YpE = Magnetometro;
+}*/
+void PIDconvert(){
+  /*
+  SOBRE LA POSICION DE LOS MOTORES":
+  ^^  M1  M2 ^^   ^^  PW[0]  PW[1] ^^
+  ^^  M3  M4 ^^   ^^  PW[2]  PW[3] ^^
+  SOBRE EL GIROSCOPIO
+  X= ROLL
+  Y=PITCH
+*/
+  PW[0] = DatosApp[0] + PWRoll * (10000/981) * (9/5) + PWPitch * (10000/981) * (9/5) + PWYaw * (10000/981) * (9/5);
+  PW[1] = DatosApp[0] - PWRoll * (10000/981) * (9/5) + PWPitch * (10000/981) * (9/5) - PWYaw * (10000/981) * (9/5);
+  PW[2] = DatosApp[0] + PWRoll * (10000/981) * (9/5) - PWPitch * (10000/981) * (9/5) - PWYaw * (10000/981) * (9/5);
+  PW[3] = DatosApp[0] - PWRoll * (10000/981) * (9/5) - PWPitch * (10000/981) * (9/5) + PWYaw * (10000/981) * (9/5);
+  
 }
 void MotorDriver(){ 
   BrushlessM1.write(PW[0]);
@@ -167,25 +200,7 @@ void MotorDriver(){
   BrushlessM3.write(PW[2]);
   BrushlessM4.write(PW[3]);
  }
- /*
-void PIDRoll(){
-  float E = Giroscopio[0] - DatosApp[0];
-  float IoutRoll = IoutRoll + (E * KiRoll);
-  PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + IoutRoll;
-  RpE = Giroscopio[0] - DatosApp[0];
-}
-void PIDPitch(){
-  float E = Giroscopio[1] - DatosApp[1];
-  float IoutPitch = IoutPitch + (E * KiPitch);
-  PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + IoutPitch;
-  PpE = Giroscopio[1] - DatosApp[1];
-}
-/*void PIDYaw(){
-  float E = Magnetometro;1
-  float IoutYaw = Ioutyaw + (E * KiYaw);
-  PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + IoutYaw;
-  YpE = Magnetometro;
-}*/
+
 void setup() {
   Serial.begin(115200);
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
@@ -208,10 +223,10 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   WifiConection();                          //RECEPCION DE DATOS
   //Giro();                                 //INPUT DEL GIROSCOPIO
   //Magnetometro();                         //INPUT DEL MAGNETOMETRO
-  //PIDRoll();                              //PID ROLL
-  //PIDPitch();                             //PID PITCH
+  PIDRoll();                              //PID ROLL
+  PIDPitch();                             //PID PITCH
   //PIDYaw();                               //PID YAW
-  //PIDconvert();                           //SUMA DE LOS OUTPUT DE LOS PID
+  PIDconvert();                             //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();
   //Serial.println(PW[0]);
   //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
