@@ -28,11 +28,11 @@ Advertencias:
   IPAddress primaryDNS(8, 8, 8, 8);   // optional
   IPAddress secondaryDNS(8, 8, 4, 4); // optional
 */
-#include <ESP32Servo.h>
-#include <WiFi.h>
+#include "ESP32Servo.h"
+#include "WiFi.h"
 //#include "I2Cdev.h"
 //#include "MPU6050.h"
-#include "Wire.h"
+//#include "Wire.h"
 WiFiServer server(80);
 
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
@@ -160,7 +160,7 @@ void assign(){
   Serial.print("Zero X Axis: "); Serial.print(DatosApp[3]); Serial.print("  "); 
   Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print("  "); 
   Serial.println("uT");
-}
+}/*
 void PIDRoll(){
   float E = Giroscopio[0] - DatosApp[1];
   float IoutRoll = IoutRoll + (E * KiRoll);
@@ -173,7 +173,7 @@ void PIDPitch(){
   PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + IoutPitch;
   PpE = Giroscopio[1] - DatosApp[2];
 }
-void PIDYaw(){/*
+/*void PIDYaw(){
   float E = Magnetometro;
   float IoutYaw = Ioutyaw + (E * KiYaw);
   PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + IoutYaw;
@@ -223,8 +223,8 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   WifiConection();                          //RECEPCION DE DATOS
   //Giro();                                 //INPUT DEL GIROSCOPIO
   //Magnetometro();                         //INPUT DEL MAGNETOMETRO
-  PIDRoll();                              //PID ROLL
-  PIDPitch();                             //PID PITCH
+  //PIDRoll();                              //PID ROLL
+  //PIDPitch();                             //PID PITCH
   //PIDYaw();                               //PID YAW
   PIDconvert();                             //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();
