@@ -28,12 +28,16 @@ Advertencias:
   IPAddress primaryDNS(8, 8, 8, 8);   // optional
   IPAddress secondaryDNS(8, 8, 4, 4); // optional
 */
-#include "ESP32Servo.h"
+#include <ESP32Servo.h>
 #include "WiFi.h"
-//#include "I2Cdev.h"
-//#include "MPU6050.h"
-//#include "Wire.h"
+#include <Adafruit_MPU6050.h>
+#include <I2Cdev.h>
+#include <Wire.h>
+#include <math.h>
+#include <SPI.h>
 WiFiServer server(80);
+
+Adafruit_MPU6050 mpu;
 
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
 const char* password = "PASSWORD";              //REMPLAZAR POR CONTRA
@@ -41,9 +45,7 @@ String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIB
 int TimingVar=950;
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
                                             //FALTA VARIABLE DE MAGNETOMETRO!
-float AnglePitchX;
-float AnglePitchY;
-float ax, ay;
+float Giroscopio[2] = {0,0};
 float DatosApp[5] = {0,0,0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 
 Servo BrushlessM1;
@@ -89,6 +91,80 @@ void MotorStart(){
   BrushlessM3.attach(M3, 1000, 2000); 
   BrushlessM4.attach(M4, 1000, 2000); 
 }
+void MPU6050Start(){
+  while (!Serial)
+    delay(10);
+  if (!mpu.begin()) {
+    while (1) {
+      delay(10);
+    }
+  }
+  Serial.println("MPU6050 Found!");
+
+  mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+  /*Serial.print("Accelerometer range set to: ");
+  switch (mpu.getAccelerometerRange()) {
+  case MPU6050_RANGE_2_G:
+    Serial.println("+-2G");
+    break;
+  case MPU6050_RANGE_4_G:
+    Serial.println("+-4G");
+    break;
+  case MPU6050_RANGE_8_G:
+    Serial.println("+-8G");
+    break;
+  case MPU6050_RANGE_16_G:
+    Serial.println("+-16G");
+    break;
+  }*/
+ 
+  mpu.setGyroRange(MPU6050_RANGE_2000_DEG);
+  /*Serial.print("Gyro range set to: ");
+  switch (mpu.getGyroRange()) {
+  case MPU6050_RANGE_250_DEG:
+    Serial.println("+- 250 deg/s");
+    break;
+  case MPU6050_RANGE_500_DEG:
+    Serial.println("+- 500 deg/s");
+    break;
+  case MPU6050_RANGE_1000_DEG:
+    Serial.println("+- 1000 deg/s");
+    break;
+  case MPU6050_RANGE_2000_DEG:
+    Serial.println("+- 2000 deg/s");
+    break;
+  }*/
+
+  mpu.setFilterBandwidth(MPU6050_BAND_260_HZ);
+  /*Serial.print("Filter bandwidth set to: ");
+  switch (mpu.getFilterBandwidth()) {
+  case MPU6050_BAND_260_HZ:
+    Serial.println("260 Hz");
+    break;
+  case MPU6050_BAND_184_HZ:
+    Serial.println("184 Hz");
+    break;
+  case MPU6050_BAND_94_HZ:
+    Serial.println("94 Hz");
+    break;
+  case MPU6050_BAND_44_HZ:
+    Serial.println("44 Hz");
+    break;
+  case MPU6050_BAND_21_HZ:
+    Serial.println("21 Hz");
+    break;
+  case MPU6050_BAND_10_HZ:
+    Serial.println("10 Hz");
+    break;
+  case MPU6050_BAND_5_HZ:
+    Serial.println("5 Hz");
+    break;
+  }
+
+  Serial.println("");*/
+  //delay(100);
+
+}
 void WifiConection(){
   WiFiClient client = server.available();
     if(client.available()){
@@ -105,7 +181,6 @@ void WifiConection(){
         //Serial.println(msj);
         clasify();
         msj="";
-        //delay(1);  
   }
   clasify();
 }
@@ -160,7 +235,56 @@ void assign(){
   Serial.print("Zero X Axis: "); Serial.print(DatosApp[3]); Serial.print("  "); 
   Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print("  "); 
   Serial.println("uT");
-}/*
+}
+void Acelerometro(){
+  //float AnglePitchX;    //Variables para tener angulos en grados
+  //float AnglePitchY;    //Variables para tener angulos en grados
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  /*
+  Serial.print("Acceleration X: ");
+  Serial.print(a.acceleration.x);
+  Serial.print(", Y: ");
+  Serial.print(a.acceleration.y);
+  Serial.print(", Z: ");
+  Serial.print(a.acceleration.z);
+  Serial.println(" m/s^2");
+
+  Serial.print("Rotation X: ");
+  Serial.print(g.gyro.x);
+  Serial.print(", Y: ");
+  Serial.print(g.gyro.y);
+  Serial.print(", Z: ");
+  Serial.print(g.gyro.z);
+  Serial.println(" rad/s");
+
+  Serial.print("Temperature: ");
+  Serial.print(temp.temperature);
+  Serial.println(" degC");*/
+
+  //AnglePitchX=-atan(a.acceleration.x/sqrt(a.acceleration.y*a.acceleration.y+a.acceleration.z*
+  //a.acceleration.z))*1/(3.142/180);
+  // Print out the values
+  /*
+  Serial.print("Angle X: ");
+  Serial.print(AnglePitchX);
+  Serial.println(" °c");
+  */
+  //AnglePitchY=-atan(a.acceleration.y/sqrt(a.acceleration.x*a.acceleration.x+a.acceleration.z*
+  //a.acceleration.z))*1/(3.142/180);
+  // Print out the values
+  /*
+  Serial.print("Angle Y: ");
+  Serial.print(AnglePitchY);
+  Serial.println(" °c");
+ 
+  Serial.println("");*/
+  //delay(500);
+
+  Giroscopio[0] = a.acceleration.x;
+  Giroscopio[1] = a.acceleration.y;
+}
 void PIDRoll(){
   float E = Giroscopio[0] - DatosApp[1];
   float IoutRoll = IoutRoll + (E * KiRoll);
@@ -192,7 +316,6 @@ void PIDconvert(){
   PW[1] = DatosApp[0] - PWRoll * (10000/981) * (9/5) + PWPitch * (10000/981) * (9/5) - PWYaw * (10000/981) * (9/5);
   PW[2] = DatosApp[0] + PWRoll * (10000/981) * (9/5) - PWPitch * (10000/981) * (9/5) - PWYaw * (10000/981) * (9/5);
   PW[3] = DatosApp[0] - PWRoll * (10000/981) * (9/5) - PWPitch * (10000/981) * (9/5) + PWYaw * (10000/981) * (9/5);
-  
 }
 void MotorDriver(){ 
   BrushlessM1.write(PW[0]);
@@ -204,7 +327,6 @@ void MotorDriver(){
 void setup() {
   Serial.begin(115200);
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
-  //incialicia_Gyro();
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
   ESP32PWM::allocateTimer(0);
   ESP32PWM::allocateTimer(1);
@@ -216,18 +338,18 @@ void setup() {
   BrushlessM3.setPeriodHertz(50);  
   BrushlessM4.setPeriodHertz(50); 
   MotorStart();
+  MPU6050Start();
  
 }
 
 void loop() {                               //NO PONER DELAYS!!!!!!!
   WifiConection();                          //RECEPCION DE DATOS
-  //Giro();                                 //INPUT DEL GIROSCOPIO
+  Acelerometro();                                 //INPUT DEL GIROSCOPIO
   //Magnetometro();                         //INPUT DEL MAGNETOMETRO
-  //PIDRoll();                              //PID ROLL
-  //PIDPitch();                             //PID PITCH
+  PIDRoll();                              //PID ROLL
+  PIDPitch();                             //PID PITCH
   //PIDYaw();                               //PID YAW
   PIDconvert();                             //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();
-  //Serial.println(PW[0]);
   //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 }
