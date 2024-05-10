@@ -31,6 +31,7 @@ Advertencias:
 #include <ESP32Servo.h>
 #include "WiFi.h"
 #include <Adafruit_MPU6050.h>
+#include <QMC5883L.h>
 #include <I2Cdev.h>
 #include <Wire.h>
 #include <math.h>
@@ -38,14 +39,16 @@ Advertencias:
 WiFiServer server(80);
 
 Adafruit_MPU6050 mpu;
+QMC5883L compass;
 
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
 const char* password = "PASSWORD";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
 int TimingVar=950;
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
-                                            //FALTA VARIABLE DE MAGNETOMETRO!
-float Giroscopio[2] = {0,0};
+
+int DatosMagnetometro[2] = {0,0};                                        
+float DatosAcelerometro[2] = {0,0};
 float DatosApp[5] = {0,0,0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 
 Servo BrushlessM1;
@@ -282,27 +285,34 @@ void Acelerometro(){
   Serial.println("");*/
   //delay(500);
 
-  Giroscopio[0] = a.acceleration.x;
-  Giroscopio[1] = a.acceleration.y;
+  DatosAcelerometro[0] = a.acceleration.x;
+  DatosAcelerometro[1] = a.acceleration.y;
+}
+void Magnetometro(){
+  DatosMagnetometro[1] = compass.readHeading();
+  //r = compass.readRaw(&x,&y,&z,&t);
+  
+  Serial.print("Degree: ");
+  Serial.println(DatosMagnetometro[1]);
 }
 void PIDRoll(){
-  float E = Giroscopio[0] - DatosApp[1];
+  float E = DatosAcelerometro[0] - DatosApp[1];
   float IoutRoll = IoutRoll + (E * KiRoll);
   PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + IoutRoll;
-  RpE = Giroscopio[0] - DatosApp[1];
+  RpE = DatosAcelerometro[0] - DatosApp[1];
 }
 void PIDPitch(){
-  float E = Giroscopio[1] - DatosApp[2];
+  float E = DatosAcelerometro[1] - DatosApp[2];
   float IoutPitch = IoutPitch + (E * KiPitch);
   PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + IoutPitch;
-  PpE = Giroscopio[1] - DatosApp[2];
+  PpE = DatosAcelerometro[1] - DatosApp[2];
 }
-/*void PIDYaw(){
-  float E = Magnetometro;
+void PIDYaw(){
+  float E = DatosMagnetometro[0] - DatosMagnetometro[1];
   float IoutYaw = Ioutyaw + (E * KiYaw);
   PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + IoutYaw;
-  YpE = Magnetometro;
-}*/
+  YpE = DatosMagnetometro[0] - DatosMagnetometro[1];
+}
 void PIDconvert(){
   /*
   SOBRE LA POSICION DE LOS MOTORES":
@@ -326,6 +336,7 @@ void MotorDriver(){
 
 void setup() {
   Serial.begin(115200);
+  Wire.begin();
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
   ESP32PWM::allocateTimer(0);
@@ -339,16 +350,17 @@ void setup() {
   BrushlessM4.setPeriodHertz(50); 
   MotorStart();
   MPU6050Start();
+  compass.init();
  
 }
 
 void loop() {                               //NO PONER DELAYS!!!!!!!
   WifiConection();                          //RECEPCION DE DATOS
   Acelerometro();                                 //INPUT DEL GIROSCOPIO
-  //Magnetometro();                         //INPUT DEL MAGNETOMETRO
+  Magnetometro();                         //INPUT DEL MAGNETOMETRO
   PIDRoll();                              //PID ROLL
   PIDPitch();                             //PID PITCH
-  //PIDYaw();                               //PID YAW
+  PIDYaw();                               //PID YAW
   PIDconvert();                             //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();
   //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR

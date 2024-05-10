@@ -1,27 +1,28 @@
-//-----------↓↓↓↓↓------------MPU6050 Libs-----------↓↓↓↓↓------------
-
-//-----------↑↑↑↑↑------------MPU6050 Libs-----------↑↑↑↑↑------------
 
 
 
+void setup() {
 
-//-----------↓↓↓↓↓------------MPU6050 Setup-----------↓↓↓↓↓------------
+  Serial.begin(115200);
+}
 
-
-
-
-float ax, ay;
+//compass.setSamplingRate(10);
+//-----------↑↑↑↑↑------------QMC5883L Setup-----------↑↑↑↑↑------------
 
 
 
 
 void loop() {
-
-  Sensor(ax, ay);
-
-  Serial.print("Acceleration X: ");
-  Serial.print(ax);
-  Serial.print(", Y: ");
-  Serial.println(ay);*/
-  //delay(500);
+  //int r;
+  //int16_t x,y,z,t;
+ 
+  int heading = compass.readHeading();
+  //r = compass.readRaw(&x,&y,&z,&t);
+ 
+  Serial.print("Degree: ");
+  Serial.println(heading);
+  //Serial.print("| Rotation: ");
+  //Serial.println(r);
+ 
+  //delay(250);
 }
