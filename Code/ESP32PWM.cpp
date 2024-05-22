@@ -5,7 +5,7 @@
  *      Author: hephaestus
  */
 
-#include "../Headers/ESP32-Servo/ESP32PWM.h"
+#include <ESP32PWM.h>
 #include "esp32-hal-ledc.h"
 
 // initialize the class variable ServoCount

@@ -8,5 +8,6 @@
         "string_view": "c",
         "initializer_list": "c",
         "cstdint": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }

@@ -28,14 +28,14 @@ Advertencias:
   IPAddress primaryDNS(8, 8, 8, 8);   // optional
   IPAddress secondaryDNS(8, 8, 4, 4); // optional
 */
-#include <ESP32Servo.h>
+#include "ESP32Servo.h"
 #include "WiFi.h"
-#include <Adafruit_MPU6050.h>
-#include <QMC5883L.h>
-#include <I2Cdev.h>
-#include <Wire.h>
-#include <math.h>
-#include <SPI.h>
+#include "Adafruit_MPU6050.h"
+#include "QMC5883L.h" //Ver si funciona
+#include "I2Cdev.h"
+#include "Wire.h"
+#include "math.h"
+#include "SPI.h"
 WiFiServer server(80);
 
 Adafruit_MPU6050 mpu;
@@ -306,7 +306,7 @@ void PIDPitch(){
 }
 void PIDYaw(){
   float E = DatosMagnetometro[0] - DatosMagnetometro[1];
-  float IoutYaw = Ioutyaw + (E * KiYaw);
+  float IoutYaw = IoutYaw + (E * KiYaw);
   PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + IoutYaw;
   YpE = DatosMagnetometro[0] - DatosMagnetometro[1];
 }
