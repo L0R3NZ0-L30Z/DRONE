@@ -172,35 +172,32 @@ void WifiConection(){
   WiFiClient client = server.available();
     if(client.available()){
       while(client.connected()){
+       
         char c = client.read();
-        if(c == '\n'){
-          client.println("GET /Res?Slider=xx&XGyro=xx&YGyro=xx&0x=xx&0y=xx HTTP/1.1");
-          client.println("Host: " + String(WiFi.localIP()));
-          client.println("Connection: close");
-          client.println();
-          break;}
+        if(c == '\n'){break;}
           msj += c;
         }
         //Serial.println(msj);
         clasify();
         msj="";
   }
-  clasify();
 }
 void clasify(){
   /*GET /Res?ID=8896&Slider=0&XGyro=0.005&YGyro=0.015&0x=-2.6025&0y=3.82375 HTTP/1.1*/
   int temp;
   String var = "";
-  for(int i=12; i!='&'; i++){var += msj[i];}
+  for(int i=12; i<=16; i++) var += msj.charAt(i);
   temp = var.toInt();
-  if(TimingVar<temp && temp<TimingVar + 8000){
+ 
+  if(TimingVar>9800 && temp<1150){
     assign();
     TimingVar=temp;
   }
-  else if(TimingVar>9950 && temp<1050){
+  else if(TimingVar<temp && temp<TimingVar + 1501){
     assign();
     TimingVar=temp;
-  } 
+  }
+   
 }
 void assign(){
   String var = "";
@@ -217,26 +214,26 @@ void assign(){
   for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
   DatosApp[1]= var.toFloat();
   var = "";
-  
+ 
   cont = cont + 7;
   for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
   DatosApp[2]= var.toFloat();
   var = "";
-  
+ 
   cont = cont + 4;
   for(i=cont; msj[i]!='&'; i++){var += msj[i];cont++;}
   DatosApp[3]= var.toFloat();
   var = "";
-  
+ 
   cont = cont + 4;
   for(i=cont; msj[i]!='\0'; i++){var += msj[i];cont++;}
   DatosApp[4]= var.toFloat();
   var = "";
   Serial.print("Slider: "); Serial.print(DatosApp[0]); Serial.print("  ");
-  Serial.print("Gyro X Axis: "); Serial.print(DatosApp[1]); Serial.print("  "); 
-  Serial.print("Gyro Y Axis: "); Serial.print(DatosApp[2]); Serial.print("  "); 
-  Serial.print("Zero X Axis: "); Serial.print(DatosApp[3]); Serial.print("  "); 
-  Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print("  "); 
+  Serial.print("Gyro X Axis: "); Serial.print(DatosApp[1]); Serial.print("  ");
+  Serial.print("Gyro Y Axis: "); Serial.print(DatosApp[2]); Serial.print("  ");
+  Serial.print("Zero X Axis: "); Serial.print(DatosApp[3]); Serial.print("  ");
+  Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print("  ");
   Serial.println("uT");
 }
 void Acelerometro(){
