@@ -1,77 +1,49 @@
-//PINES DISPONIBLES 14 ,17, 19, 21, 22, 23.
-/*
-  SOBRE LA POSICION DE LOS MOTORES":
-  ^^  M1  M2 ^^
-  ^^  M3  M4 ^^
-  SOBRE EL GIROSCOPIO
-  X= ROLL
-  Y=PITCH
-*/
-
-/*
-Advertencias:
-- Tener en cuenta que la posicion del giroscopio/*accelerometro y magnetometro hara que haya que 
-  redefinir la configuracion de los motores y demas varables.
-
-*/
-/*
-  INCLUIR:
-  WiFi.RSSI()
-
-  WiFi.setHostname(YOUR_NEW_HOSTNAME);
-
-  IPAddress local_IP(192, 168, 1, 184);
-  // Set your Gateway IP address
-  IPAddress gateway(192, 168, 1, 1);
-
-  IPAddress subnet(255, 255, 0, 0);
-  IPAddress primaryDNS(8, 8, 8, 8);   // optional
-  IPAddress secondaryDNS(8, 8, 4, 4); // optional
-*/
 #include <ESP32Servo.h>
 #include "WiFi.h"
 
 WiFiServer server(80);
 
+const char* ssid = "SSID";
+const char* password = "PASSWORD";
+String msj;
+int TimingVar = 950;
+float bat = 99.9;
 
-
-const char* ssid = "SSID";                  //REMPLAZAR POR SSID
-const char* password = "PASSWORD";              //REMPLAZAR POR CONTRA
-String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
-int TimingVar=950;
-float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIA
-
-int DatosMagnetometro[] = {0,0,0,0};        //dato,dato,origen,origen                                
-float DatosAcelerometro[] = {0,0,0,0};           //dato,dato,origen,origen
-float DatosApp[5] = {0,0,0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
+int DatosMagnetometro[] = {0, 0, 0, 0};
+float DatosAcelerometro[] = {0, 0, 0, 0};
+float DatosApp[5] = {0, 0, 0, 0, 0};
 
 Servo BrushlessM1;
 Servo BrushlessM2;
 Servo BrushlessM3;
 Servo BrushlessM4;
 
-int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
-float PWRoll;                               //VARIABLES DE ROLL 
-float PWPitch;                              //VARIABLES DE PITCH
-float PWYaw;                                //VARIABLES DE YAW
+int PW[4] = {0, 0, 0, 0};
+float PWRoll;
+float PWPitch;
+float PWYaw;
 float RpE = 0;
 float PpE = 0;
 float YpE = 0;
-#define M1 12                               //DEFINICION DE MOTORES
-#define M2 14                               //DEFINICION DE MOTORES
-#define M3 26                               //DEFINICION DE MOTOREaS
-#define M4 27                               //DEFINICION DE MOTORES
-#define KpRoll   0                          //DEFINICION DE CONSTANTE PARA AJUSTE PID
-#define KiRoll   0                          //DEFINICION DE CONSTANTE PARA AJUSTE PID
-#define KdRoll   0                          //DEFINICION DE CONSTANTE PARA AJUSTE PID
-#define KpPitch   0                         //DEFINICION DE CONSTANTE PARA AJUSTE PID
-#define KiPitch   0                         //DEFINICION DE CONSTANTE PARA AJUSTE PID
-#define KdPitch   0                         //DEFINICION DE CONSTANTE PARA AJUSTE PID
-#define KpYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
-#define KiYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
-#define KdYaw   0                           //DEFINICION DE CONSTANTE PARA AJUSTE PID
-#define PRDiv 1                             //DEFINICION DE CONSTANTE PARA DIVIDIR LA ENTRADA DE LA POTENCIA
-#define ConstProportional 25.992883792      //DEFINICION DE CONSTANTE PARA AJUSTAR LA SALIDA DEL PID
+
+#define M1 12
+#define M2 14
+#define M3 26
+#define M4 27
+
+#define KpRoll   0
+#define KiRoll   0
+#define KdRoll   0
+
+#define KpPitch   0
+#define KiPitch   0
+#define KdPitch   0
+
+#define KpYaw   0
+#define KiYaw   0
+#define KdYaw   0
+
+#define PRDiv 1
 
 void WifiStart(){
   WiFi.mode(WIFI_STA);
@@ -82,12 +54,14 @@ void WifiStart(){
   }
   server.begin();
 }
+
 void MotorStart(){
   BrushlessM1.attach(M1, 1000, 2000); 
   BrushlessM2.attach(M2, 1000, 2000); 
   BrushlessM3.attach(M3, 1000, 2000); 
   BrushlessM4.attach(M4, 1000, 2000); 
 }
+
 void WifiConection(){
   WiFiClient client = server.available();
     if(client.available()){
@@ -97,13 +71,12 @@ void WifiConection(){
         if(c == '\n'){break;}
           msj += c;
         }
-        //Serial.println(msj);
         clasify();
         msj="";
   }
 }
+
 void clasify(){
-  /*GET /Res?ID=8896&Slider=0&XGyro=0.005&YGyro=0.015&0x=-2.6025&0y=3.82375 HTTP/1.1*/
   int temp;
   String var = "";
   for(int i=12; i<=16; i++) var += msj.charAt(i);
@@ -117,8 +90,8 @@ void clasify(){
     assign();
     TimingVar=temp;
   }
-   
 }
+
 void assign(){
   String var = "";
   int i;
@@ -146,45 +119,36 @@ void assign(){
   for(i=cont; msj[i]!='\0'; i++){var += msj[i];cont++;}
   DatosApp[4]= var.toFloat();
   var = "";
-  Serial.print("Slider: "); Serial.print(DatosApp[0]); Serial.print("  ");
-  Serial.print("Gyro X Axis: "); Serial.print(DatosApp[1]); Serial.print("  ");
-  Serial.print("Gyro Y Axis: "); Serial.print(DatosApp[2]); Serial.print("  ");
-  Serial.print("Zero X Axis: "); Serial.print(DatosApp[3]); Serial.print("  ");
-  Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print("  ");
-  Serial.println("uT");
 }
+
 void PIDRoll(){
   float E = DatosAcelerometro[0] - DatosApp[1];
   float IoutRoll = IoutRoll + (E * KiRoll);
   PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + IoutRoll;
   RpE = DatosAcelerometro[0] - DatosApp[1];
 }
+
 void PIDPitch(){
   float E = DatosAcelerometro[1] - DatosApp[2];
   float IoutPitch = IoutPitch + (E * KiPitch);
   PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + IoutPitch;
   PpE = DatosAcelerometro[1] - DatosApp[2];
 }
+
 void PIDYaw(){
   float E = DatosMagnetometro[0] - DatosMagnetometro[1];
   float IoutYaw = IoutYaw + (E * KiYaw);
   PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + IoutYaw;
   YpE = DatosMagnetometro[0] - DatosMagnetometro[1];
 }
+
 void PIDconvert(){
-  /*
-  SOBRE LA POSICION DE LOS MOTORES":
-  ^^  M1  M2 ^^   ^^  PW[0]  PW[1] ^^
-  ^^  M3  M4 ^^   ^^  PW[2]  PW[3] ^^
-  SOBRE EL GIROSCOPIO
-  X= ROLL
-  Y=PITCH
-*/
-  PW[0] = DatosApp[0] + PWRoll * (10000/981) * (9/5) + PWPitch * (10000/981) * (9/5) + PWYaw * (10000/981) * (9/5);
-  PW[1] = DatosApp[0] - PWRoll * (10000/981) * (9/5) + PWPitch * (10000/981) * (9/5) - PWYaw * (10000/981) * (9/5);
-  PW[2] = DatosApp[0] + PWRoll * (10000/981) * (9/5) - PWPitch * (10000/981) * (9/5) - PWYaw * (10000/981) * (9/5);
-  PW[3] = DatosApp[0] - PWRoll * (10000/981) * (9/5) - PWPitch * (10000/981) * (9/5) + PWYaw * (10000/981) * (9/5);
+  PW[0] = DatosApp[0] + PWRoll * (2000/109) + PWPitch * (2000/109) + PWYaw * (2000/109);
+  PW[1] = DatosApp[0] - PWRoll * (2000/109) + PWPitch * (2000/109) - PWYaw * (2000/109);
+  PW[2] = DatosApp[0] + PWRoll * (2000/109) - PWPitch * (2000/109) - PWYaw * (2000/109);
+  PW[3] = DatosApp[0] - PWRoll * (2000/109) - PWPitch * (2000/109) + PWYaw * (2000/109);
 }
+
 void MotorDriver(){ 
   BrushlessM1.write(PW[0]);
   BrushlessM2.write(PW[1]);
@@ -194,35 +158,28 @@ void MotorDriver(){
 
 void setup() {
   Serial.begin(115200);
-  WifiStart();                              //INICIO DE RECEPCION DE DATOS
-  //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
+  WifiStart();
   pinMode(32, OUTPUT);
   ESP32PWM::allocateTimer(0);
   ESP32PWM::allocateTimer(1);
   ESP32PWM::allocateTimer(2);
   ESP32PWM::allocateTimer(3);
   
-  BrushlessM1.setPeriodHertz(50);    // standard 50 hz servo 
+  BrushlessM1.setPeriodHertz(50);
   BrushlessM2.setPeriodHertz(50);  
   BrushlessM3.setPeriodHertz(50);  
   BrushlessM4.setPeriodHertz(50); 
   MotorStart();
-  //MPU6050Start();
-  //compass.init();
-  //Medir pos accell y magne para despus
 }
 
-void loop() {                               //NO PONER DELAYS!!!!!!!
-  int bri=0;
-  WifiConection();                          //RECEPCION DE DATOS
-  //Acelerometro();                                 //INPUT DEL GIROSCOPIO
-  //Magnetometro();                         //INPUT DEL MAGNETOMETRO
-  PIDRoll();                              //PID ROLL
-  PIDPitch();                             //PID PITCH
-  PIDYaw();                               //PID YAW
-  PIDconvert();                             //SUMA DE LOS OUTPUT DE LOS PID
+void loop() {
+  int bri = 0;
+  WifiConection();
+  PIDRoll();
+  PIDPitch();
+  PIDYaw();
+  PIDconvert();
   MotorDriver();
   bri = DatosApp[5] * 17 / 12;
   analogWrite(32, bri);
-  //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 }
