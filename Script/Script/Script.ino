@@ -42,7 +42,10 @@ WiFiServer server(80);
 
 Adafruit_MPU6050 mpu;
 Preferences preferences;
+Preferences preferences;
 
+
+String incomingData;
 const char* ssid = "SSID";                  //REMPLAZAR POR SSID
 const char* password = "PASSWORD";              //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFI
@@ -70,52 +73,15 @@ const int M2 = 14;                               //DEFINICION DE MOTORES
 const int M3 = 26;                               //DEFINICION DE MOTOREaS
 const int M4 = 27;                               //DEFINICION DE MOTORES 
 
-
-void FlashStart(){
-  preferences.begin("my-app", false);
-  int KPR = 0;
-  int KpRoll = preferences.getInt("KpRoll", KPR); // Initialize KpRoll to KPR(0)
-  Serial.print("KpRoll: ");
-  Serial.println(KpRoll);
-  int KIR = 0;
-  int KiRoll = preferences.getInt("KiRoll", KIR); // Initialize KiRoll to KIR(0)
-  Serial.print("KiRoll: ");
-  Serial.println(KiRoll);
-  int KDR = 0;
-  int KdRoll = preferences.getInt("KdRoll", KDR); // Initialize KdRoll to KDR(0)
-  Serial.print("KdRoll: ");
-  Serial.println(KdRoll);
-  int KPP = 0;
-  int KpPitch = preferences.getInt("KpPitch", KPP); // Initialize KpPitch to KPP(0)
-  Serial.print("KpPitch: ");
-  Serial.println(KpPitch);
-  int KIP = 0;
-  int KiPitch = preferences.getInt("KiPitch", KIP); // Initialize KiPitch to KIP(0)
-  Serial.print("KiPitch: ");
-  Serial.println(KiPitch);
-  int KDP = 0;
-  int KdPitch = preferences.getInt("KdPitch", KDP); // Initialize KdPitch to KDP(0)
-  Serial.print("KdPitch: ");
-  Serial.println(KdPitch);
-  int KPY = 0;
-  int KpYaw = preferences.getInt("KpYaw", KPY); // Initialize KpYaw to KPY(0)
-  Serial.print("KpYaw: ");
-  Serial.println(KpYaw);
-  int KIY = 0;
-  int KiYaw = preferences.getInt("KiYaw", KIY); // Initialize KiYaw to KIY(0)
-  Serial.print("KiYaw: ");
-  Serial.println(KiYaw);
-  int KDY = 0;
-  int KdYaw = preferences.getInt("KdYaw", KDY);  // Initialize KdYaw to KDY(0)
-  Serial.print("KdYaw: ");
-  Serial.println(KdYaw);
-  int PRD = 0;
-  int PRDiv = preferences.getInt("PRDiv", PRD); // Initialize PRDiv to PRD(0)
-  Serial.print("PRDiv: ");
-  Serial.println(PRDiv);
-
-  preferences.end();
-}
+float KpRoll;
+float KiRoll;
+float KdRoll;
+float KpPitch;
+float KiPitch;
+float KdPitch;
+float KpYaw;
+float KiYaw;
+float KdYaw;
 
 void WifiStart(){
   WiFi.mode(WIFI_STA);
@@ -205,9 +171,77 @@ void MPU6050Start(){
   //delay(100);
 
 }
-void Flash(){
+
+void readSerialData() {
+    if (Serial.available() > 0) {
+        while (Serial.available()) {
+            char c = Serial.read();
+            incomingData += c;
+            delay(2);
+        }
+        Serial.println("Received data:");
+        Serial.println(incomingData);
+        filterAndStore();
+        incomingData = "";
+    }
+}
+
+void filterAndStore() {
+    int values[9] = {0};
+    int index = 0;
+    int startIndex = 0;
+
+    for (int i = 0; i < incomingData.length(); i++) {
+        if (incomingData[i] == ',') {
+            String valueStr = incomingData.substring(startIndex, i);
+            values[index++] = valueStr.toInt();
+            startIndex = i + 1;
+        }
+    }
+
+    if (startIndex < incomingData.length()) {
+        String valueStr = incomingData.substring(startIndex);
+        values[index] = valueStr.toInt();
+    }
+
+    storeValue("KpRoll", values[0]);
+    storeValue("KiRoll", values[1]);
+    storeValue("KdRoll", values[2]);
+    storeValue("KpPitch", values[3]);
+    storeValue("KiPitch", values[4]);
+    storeValue("KdPitch", values[5]);
+    storeValue("KpYaw", values[6]);
+    storeValue("KiYaw", values[7]);
+    storeValue("KdYaw", values[8]);
+
+    printandset();
+}
+void printandset(){
+  KpRoll = printvalue("KpRoll");
+  KiRoll = printvalue("KiRoll");
+  KdRoll = printvalue("KdRoll");
+  KpPitch = printvalue("KpPitch");
+  KiPitch = printvalue("KiPitch");
+  KdPitch = printvalue("KdPitch");
+  KpYaw = printvalue("KpYaw");
+  KiYaw = printvalue("KiYaw");
+  KdYaw = printvalue("KdYaw");
+}
+
+float printvalue(const char* key) {
+    preferences.begin("my-app", false);
+    float value = preferences.getInt(key, 0);
+    Serial.print(key);
+    Serial.print(": ");
+    Serial.println(value);
+    preferences.end();
+    return value;
+}
+
+void storeValue(const char* key, int value) {
   preferences.begin("my-app", false);
-  
+  preferences.putInt(key, value);
+  preferences.end();
 }
 
 void WifiConection(){
@@ -371,7 +405,6 @@ void MotorDriver(){
 
 void setup() {
   Serial.begin(115200);
-  FlashStart();
   WifiStart();                              //INICIO DE RECEPCION DE DATOS
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
   pinMode(32, OUTPUT);
@@ -388,11 +421,18 @@ void setup() {
   MPU6050Start();
   //compass.init();
   //Medir pos accell y magne para despus
+  Serial.println("Tiempo para actualizar valores del PID");
+  for(int i=0; i<2000; i++){
+    readSerialData();
+    delay(1);
+  }
+  Serial.println("Finalizo para actualizar valores del PID");
+  printandset
 }
 
 void loop() {                               //NO PONER DELAYS!!!!!!!
   int bri=0;
-  Flash();
+
   WifiConection();                          //RECEPCION DE DATOS
   Acelerometro();                                 //INPUT DEL GIROSCOPIO
   //Magnetometro();                         //INPUT DEL MAGNETOMETRO
