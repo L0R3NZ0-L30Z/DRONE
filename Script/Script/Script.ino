@@ -39,41 +39,46 @@ Advertencias:
 #include <Preferences.h>
 
 
-WiFiServer server(80);Adafruit_MPU6050 mpu;
+WiFiServer server(80);
+Adafruit_MPU6050 mpu;
 Preferences preferences;
 
 String incomingData;
-const char* ssid = "SSID";                  //REMPLAZAR POR SSIDconst char* password = "PASSWORD";              //REMPLAZAR POR CONTRA
-String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFInt TimingVar=950;
-float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIAnt DatosMagnetometro[] = {0,0,0,0};        //dato,dato,origen,origen                                
+const char* ssid = "SSID";                  //REMPLAZAR POR SSIDconst          
+const char* password = "PASSWORD";          //REMPLAZAR POR CONTRA
+String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFi
+int TimingVar=950;
+float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIAnt 
+int DatosMagnetometro[] = {0,0,0,0};             //dato,dato,origen,origen                                
 float DatosAcelerometro[] = {0,0,0,0};           //dato,dato,origen,origen
 
 float DatosApp[5] = {0,0,0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
 Servo BrushlessM1;
 Servo BrushlessM2;
-ervo BrushlessM3;
+Servo BrushlessM3;
 Servo BrushlessM4;
 int PW[4] = {0,0,0,0};                      //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
-float PWRoll;                               //VARIABLES DE ROLL float PWPitch;                              //VARIABLES DE PITCH
+float PWRoll;                               //VARIABLES DE ROLL 
+float PWPitch;                              //VARIABLES DE PITCH
 float PWYaw;                                //VARIABLES DE YAW
 float RpE = 0;
-float PpE = 0;loat YpE = 0;
+float PpE = 0;
+float YpE = 0;
 const int M1 = 12;                               //DEFINICION DE MOTORES
 const int M2 = 14;                               //DEFINICION DE MOTORES
 const int M3 = 26;                               //DEFINICION DE MOTOREaS
 const int M4 = 27;                               //DEFINICION DE MOTORES 
 float KpRoll;
 float KiRoll;
-
 float KdRoll;
 float KpPitch;
 float KiPitch;
-float KdPitch;loat KpYaw;
+float KdPitch;
+float KpYaw;
 float KiYaw;
 float KdYaw;
 void WifiStart(){
   WiFi.mode(WIFI_STA);
-
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -158,10 +163,10 @@ void MPU6050Start(){
 
 void readSerialData() {
     if (Serial.available() > 0) {
-
         while (Serial.available()) {
-            char c = Serial.read();           incomingData += c;
-            delay(2);       }
+            char c = Serial.read();           
+            incomingData += c;
+            delay(2);}
         Serial.println("Received data:");
         Serial.println(incomingData);
         filterAndStore();
@@ -174,20 +179,23 @@ void filterAndStore() {
     int index = 0;
     int startIndex = 0;
     for (int i = 0; i < incomingData.length(); i++) {
-        if (incomingData[i] == ',') {            String valueStr = incomingData.substring(startIndex, i);
-            values[index++] = valueStr.toInt();
-            startIndex = i + 1;
-        }   }
+        if (incomingData[i] == ',') {           
+          String valueStr = incomingData.substring(startIndex, i);
+          values[index++] = valueStr.toInt();
+          startIndex = i + 1;
+          }   
+        }
     if (startIndex < incomingData.length()) {
         String valueStr = incomingData.substring(startIndex);
-
         values[index] = valueStr.toInt();
     }
     storeValue("KpRoll", values[0]);
-    storeValue("KiRoll", values[1]);    storeValue("KdRoll", values[2]);
+    storeValue("KiRoll", values[1]);    
+    storeValue("KdRoll", values[2]);
     storeValue("KpPitch", values[3]);
     storeValue("KiPitch", values[4]);
-    storeValue("KdPitch", values[5]);   storeValue("KpYaw", values[6]);
+    storeValue("KdPitch", values[5]);   
+    storeValue("KpYaw", values[6]);
     storeValue("KiYaw", values[7]);
     storeValue("KdYaw", values[8]);
     printandset();
@@ -196,7 +204,8 @@ void filterAndStore() {
 void printandset(){
   KpRoll = printvalue("KpRoll");
   KiRoll = printvalue("KiRoll");
-  KdRoll = printvalue("KdRoll"); KpPitch = printvalue("KpPitch");
+  KdRoll = printvalue("KdRoll"); 
+  KpPitch = printvalue("KpPitch");
   KiPitch = printvalue("KiPitch");
   KdPitch = printvalue("KdPitch");
   KpYaw = printvalue("KpYaw");
@@ -205,25 +214,23 @@ void printandset(){
 }
 float printvalue(const char* key) {
     preferences.begin("my-app", false);
-
     float value = preferences.getInt(key, 0);
     Serial.print(key);
     Serial.print(": ");
-    Serial.println(value);   preferences.end();
+    Serial.println(value);   
+    preferences.end();
     return value;
 }
 void storeValue(const char* key, int value) {
   preferences.begin("my-app", false);
-
   preferences.putInt(key, value);
   preferences.end();
 }
 void WifiConection(){ WiFiClient client = server.available();
-
     if(client.available()){
       while(client.connected()){
-       
-        char c = client.read();       if(c == '\n'){break;}
+        char c = client.read();       
+        if(c == '\n'){break;}
           msj += c;
         }
         //Serial.println(msj);
@@ -394,14 +401,12 @@ void setup() {
     delay(1);
   }
   Serial.println("Finalizo para actualizar valores del PID");
-  printandset
+  printandset();
 }
 void loop() {                               //NO PONER DELAYS!!!!!!!
   int bri=0;
-
   WifiConection();                          //RECEPCION DE DATOS
   Acelerometro();                                 //INPUT DEL GIROSCOPIO
-
   //Magnetometro();                         //INPUT DEL MAGNETOMETRO PIDRoll();                              //PID ROLL
   PIDPitch();                             //PID PITCH
   PIDYaw();                               //PID YAW PIDconvert();                             //SUMA DE LOS OUTPUT DE LOS PID
