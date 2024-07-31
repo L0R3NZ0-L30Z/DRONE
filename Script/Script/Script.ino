@@ -344,6 +344,7 @@ void Magnetometro(){
   compass.read();
   DatosMagnetometro[1] = compass.getAzimuth();
   if(DatosMagnetometro[1]<0){DatosMagnetometro[1] +=360;}
+  return DatosMagnetometro[1];
 }
 void PIDRoll(){
   float E = DatosAcelerometro[0] - DatosApp[1];
@@ -399,7 +400,7 @@ void setup() {
   MotorStart();
   MPU6050Start();
   compass.init();
-  //Medir pos accell y magne para despus
+  DatosMagnetometro[0] = Magnetometro(); 
   Serial.println("Tiempo para actualizar valores del PID");
   Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
   for(int i=0; i<2000; i++){
