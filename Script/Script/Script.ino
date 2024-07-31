@@ -38,6 +38,7 @@ Advertencias:
 #include <SPI.h>
 #include <Arduino.h>
 #include <Preferences.h>
+#include <esp_system.h>
 
 
 WiFiServer server(80);
@@ -52,7 +53,7 @@ const char* password = "PASSWORD";          //REMPLAZAR POR CONTRA
 String msj;                                 //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFi
 int TimingVar=950;
 float bat = 99.9;                           //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIAnt 
-int DatosMagnetometro[] = {0,0,0,0};             //dato,dato,origen,origen                                
+int DatosMagnetometro[3] = {0,0,0};             //dato,dato,origen,origen                                
 float DatosAcelerometro[] = {0,0,0,0};           //dato,dato,origen,origen
 
 float DatosApp[5] = {0,0,0,0,0};                //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
@@ -344,6 +345,18 @@ void Magnetometro(){
   compass.read();
   DatosMagnetometro[1] = compass.getAzimuth();
   if(DatosMagnetometro[1]<0){DatosMagnetometro[1] +=360;}
+
+  if(DatosMagnetometro[1]<DatosMagnetometro[3]){
+    for(int i=0; DatosMagnetometro[1]<DatosMagnetometro[3]; i++){
+      DatosMagnetometro[0]++;
+    }
+  }
+  else if(DatosMagnetometro[1]>DatosMagnetometro[3]){
+    for(int i=0; DatosMagnetometro[1]>DatosMagnetometro[3]; i++){
+      DatosMagnetometro[0]++;
+    }
+  }
+
   return DatosMagnetometro[1];
 }
 void PIDRoll(){
@@ -358,7 +371,7 @@ void PIDPitch(){
   PpE = DatosAcelerometro[1] - DatosApp[2];
 }
 void PIDYaw(){
-  float E = DatosMagnetometro[0] - DatosMagnetometro[1];
+  float E = DatosMagnetometro[0];
   float IoutYaw = IoutYaw + (E * KiYaw);
   PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + IoutYaw;
   YpE = DatosMagnetometro[0] - DatosMagnetometro[1];
@@ -400,7 +413,7 @@ void setup() {
   MotorStart();
   MPU6050Start();
   compass.init();
-  DatosMagnetometro[0] = Magnetometro(); 
+  DatosMagnetometro[2] = Magnetometro(); 
   Serial.println("Tiempo para actualizar valores del PID");
   Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
   for(int i=0; i<2000; i++){
@@ -429,6 +442,8 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   Serial.print("Zero X Axis: "); Serial.print(DatosApp[3]); Serial.print(",");
   Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print(",");
   Serial.print("Compass angle: ");Serial.print(DatosMagnetometro[1]);Serial.print(",");
+  Serial.print("Compass zero: ");Serial.print(DatosMagnetometro[3]);Serial.print(",");
+  Serial.print("Compass difference: ");Serial.print(DatosMagnetometro[0]);Serial.print(",");
   Serial.print("Accel X-Axis");Serial.print(DatosAcelerometro[0]);Serial.print(",");
   Serial.print("Accel Y-Axis");Serial.print(DatosAcelerometro[1]);Serial.print(",");
   Serial.println("uT");
