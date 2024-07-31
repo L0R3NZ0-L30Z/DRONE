@@ -179,7 +179,7 @@ void filterAndStore() {
     int index = 0;
     int startIndex = 0;
     for (int i = 0; i < incomingData.length(); i++) {
-        if (incomingData[i] == ',') {           
+        if (incomingData[i] == '/') {           
           String valueStr = incomingData.substring(startIndex, i);
           values[index++] = valueStr.toInt();
           startIndex = i + 1;
@@ -392,10 +392,11 @@ void setup() {
   BrushlessM3.setPeriodHertz(50);  
   BrushlessM4.setPeriodHertz(50); 
   MotorStart();
-  MPU6050Start();
+  //MPU6050Start();
   //compass.init();
   //Medir pos accell y magne para despus
   Serial.println("Tiempo para actualizar valores del PID");
+  Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
   for(int i=0; i<2000; i++){
     readSerialData();
     delay(1);
