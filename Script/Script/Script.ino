@@ -31,6 +31,7 @@ Advertencias:
 #include <ESP32Servo.h>
 #include "WiFi.h"
 #include <Adafruit_MPU6050.h>
+#include <QMC5883LCompass.h>
 #include <I2Cdev.h>
 #include <Wire.h>
 #include <math.h>
@@ -42,6 +43,8 @@ Advertencias:
 WiFiServer server(80);
 Adafruit_MPU6050 mpu;
 Preferences preferences;
+QMC5883LCompass compass;
+
 
 String incomingData;
 const char* ssid = "SSID";                  //REMPLAZAR POR SSIDconst          
@@ -77,6 +80,8 @@ float KdPitch;
 float KpYaw;
 float KiYaw;
 float KdYaw;
+
+
 void WifiStart(){
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -332,14 +337,19 @@ void Acelerometro(){
   //delay(500);
   DatosAcelerometro[0] = a.acceleration.x;
   DatosAcelerometro[1] = a.acceleration.y;
-
-}/*
+  /*
+  Serial.println("X-Axis");
+  Serial.println(DatosAcelerometro[0]);
+  Serial.println("Y-Axis");
+  Serial.println(DatosAcelerometro[1]);*/
+}
 void Magnetometro(){
-  DatosMagnetometro[1] = compass.readHeading();
-  //r = compass.readRaw(&x,&y,&z,&t); Serial.print("Degree: ");
+  compass.read();
+  DatosMagnetometro[1] = compass.getAzimuth();
+  if(DatosMagnetometro[1]<0){DatosMagnetometro[1] +=360;}
+  Serial.println("datosMagnetometro");
   Serial.println(DatosMagnetometro[1]);
-
-}*/
+}
 void PIDRoll(){
   float E = DatosAcelerometro[0] - DatosApp[1];
   float IoutRoll = IoutRoll + (E * KiRoll); PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + IoutRoll;
@@ -392,8 +402,8 @@ void setup() {
   BrushlessM3.setPeriodHertz(50);  
   BrushlessM4.setPeriodHertz(50); 
   MotorStart();
-  //MPU6050Start();
-  //compass.init();
+  MPU6050Start();
+  compass.init();
   //Medir pos accell y magne para despus
   Serial.println("Tiempo para actualizar valores del PID");
   Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
@@ -408,9 +418,10 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   int bri=0;
   WifiConection();                          //RECEPCION DE DATOS
   Acelerometro();                                 //INPUT DEL GIROSCOPIO
-  //Magnetometro();                         //INPUT DEL MAGNETOMETRO PIDRoll();                              //PID ROLL
+  Magnetometro();                         //INPUT DEL MAGNETOMETRO PIDRoll();                              //PID ROLL
   PIDPitch();                             //PID PITCH
-  PIDYaw();                               //PID YAW PIDconvert();                             //SUMA DE LOS OUTPUT DE LOS PID
+  PIDYaw();                               //PID YAW PID
+  //convert();                             //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();
   bri = DatosApp[5] * (17 / 12);
   analogWrite(32, bri);
