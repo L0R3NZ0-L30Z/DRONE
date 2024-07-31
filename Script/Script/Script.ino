@@ -337,18 +337,13 @@ void Acelerometro(){
   //delay(500);
   DatosAcelerometro[0] = a.acceleration.x;
   DatosAcelerometro[1] = a.acceleration.y;
-  /*
-  Serial.println("X-Axis");
-  Serial.println(DatosAcelerometro[0]);
-  Serial.println("Y-Axis");
-  Serial.println(DatosAcelerometro[1]);*/
+  
+  
 }
 void Magnetometro(){
   compass.read();
   DatosMagnetometro[1] = compass.getAzimuth();
   if(DatosMagnetometro[1]<0){DatosMagnetometro[1] +=360;}
-  Serial.println("datosMagnetometro");
-  Serial.println(DatosMagnetometro[1]);
 }
 void PIDRoll(){
   float E = DatosAcelerometro[0] - DatosApp[1];
@@ -426,4 +421,14 @@ void loop() {                               //NO PONER DELAYS!!!!!!!
   bri = DatosApp[5] * (17 / 12);
   analogWrite(32, bri);
   //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
+
+  Serial.print("Slider: "); Serial.print(DatosApp[0]); Serial.print(",");
+  Serial.print("Gyro X Axis: "); Serial.print(DatosApp[1]); Serial.print(",");
+  Serial.print("Gyro Y Axis: "); Serial.print(DatosApp[2]); Serial.print(",");
+  Serial.print("Zero X Axis: "); Serial.print(DatosApp[3]); Serial.print(",");
+  Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print(",");
+  Serial.print("Compass angle: ");Serial.print(DatosMagnetometro[1]);Serial.print(",");
+  Serial.print("Accel X-Axis");Serial.print(DatosAcelerometro[0]);Serial.print(",");
+  Serial.print("Accel Y-Axis");Serial.print(DatosAcelerometro[1]);Serial.print(",");
+  Serial.println("uT");
 }
