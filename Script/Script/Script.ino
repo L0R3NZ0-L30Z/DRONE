@@ -417,7 +417,7 @@ void setup() {
 
   WifiStart();  //INICIO DE RECEPCION DE DATOS
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
-  pinMode(32, OUTPUT);
+  pinMode(2, OUTPUT);
   ESP32PWM::allocateTimer(0);
   ESP32PWM::allocateTimer(1);
   ESP32PWM::allocateTimer(2);
@@ -447,10 +447,10 @@ void loop() {  //NO PONER DELAYS!!!!!!!
   Magnetometro();   //INPUT DEL MAGNETOMETRO PIDRoll();                              //PID ROLL
   PIDPitch();       //PID PITCH
   PIDYaw();         //PID YAW PID
-  //convert();                             //SUMA DE LOS OUTPUT DE LOS PID
+  PIDconvert();                             //SUMA DE LOS OUTPUT DE LOS PID
   MotorDriver();
-  bri = DatosApp[5] * (17 / 12);
-  analogWrite(32, bri);
+  bri = DatosApp[0] * (17 / 12);
+  analogWrite(2, bri);
   //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 
 
