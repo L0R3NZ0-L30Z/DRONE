@@ -90,6 +90,8 @@ void WifiStart() {
     Serial.print(".");
   }
   server.begin();
+  WiFi.setHostname("DR0NE");
+  IPAddress local_IP(192, 168, 1, 184);
 }
 void MotorStart() {
   BrushlessM1.attach(M1, 1000, 2000);
@@ -355,7 +357,7 @@ void Acelerometro() {
   DatosAcelerometro[0] = a.acceleration.x;
   DatosAcelerometro[1] = a.acceleration.y;
 }
-void Magnetometro() {
+int Magnetometro() {
   compass.read();
   DatosMagnetometro[1] = compass.getAzimuth();
   if (DatosMagnetometro[1] < 0) { DatosMagnetometro[1] += 360; }
@@ -451,6 +453,10 @@ void loop() {  //NO PONER DELAYS!!!!!!!
   analogWrite(32, bri);
   //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
 
+
+  Serial.print("Signal Streght: ");
+  Serial.print(WiFi.RSSI());
+  Serial.print(","); 
   Serial.print("Slider: ");
   Serial.print(DatosApp[0]);
   Serial.print(",");
