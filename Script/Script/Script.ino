@@ -36,39 +36,41 @@ Advertencias:
 #include <math.h>
 #include <SPI.h>
 #include <Arduino.h>
-
+#include <Preferences.h>
+#include <esp_system.h>
 
 
 WiFiServer server(80);
 Adafruit_MPU6050 mpu;
+Preferences preferences;
 QMC5883LCompass compass;
 
 
 String incomingData;
-const char* ssid = "SSID";          //REMPLAZAR POR SSIDconst
-const char* password = "PASSWORD";  //REMPLAZAR POR CONTRA
-String msj;                         //STRING QUE GUARDA EL MENSAJE RECIBIDO POR WIFi
+const char* ssid = "SSID";          
+const char* password = "PASSWORD";  
+String msj;                         
 int TimingVar = 950;
-float bat = 99.9;                            //VARIABLE DE ALAMACENAMIENTO DE NIVEL DE BATERIAnt
-int DatosMagnetometro[3] = { 0, 0, 0 };      //dato,dato,origen,origen
-float DatosAcelerometro[] = { 0, 0, 0, 0 };  //dato,dato,origen,origen
+float bat = 99.9;                            
+int DatosMagnetometro[2] = { 0, 0};      
+float DatosAcelerometro[] = { 0, 0, 0, 0 };  
 
-float DatosApp[5] = { 0, 0, 0, 0, 0 };  //VARIABLE DE DATOS DE DIRECCION Y POTENCIA DE LA APP
+float DatosApp[5] = { 0, 0, 0, 0, 0 };  
 Servo BrushlessM1;
 Servo BrushlessM2;
 Servo BrushlessM3;
 Servo BrushlessM4;
-int PW[4] = { 0, 0, 0, 0 };  //VARIABLES FINALES DEL DUTY CICLE DEL PWM DE LOS MOTORES // ORDEN M1,M2,M3,M4
-float PWRoll;                //VARIABLES DE ROLL
-float PWPitch;               //VARIABLES DE PITCH
-float PWYaw;                 //VARIABLES DE YAW
+int PW[4] = { 0, 0, 0, 0 };  // ORDEN M1,M2,M3,M4
+float PWRoll;                
+float PWPitch;               
+float PWYaw;                 
 float RpE = 0;
 float PpE = 0;
 float YpE = 0;
-const int M1 = 12;  //DEFINICION DE MOTORES
-const int M2 = 14;  //DEFINICION DE MOTORES
-const int M3 = 26;  //DEFINICION DE MOTOREaS
-const int M4 = 27;  //DEFINICION DE MOTORES
+const int M1 = 15;  
+const int M2 = 23;  
+const int M3 = 25;  
+const int M4 = 33;  
 float KpRoll;
 float KiRoll;
 float KdRoll;
@@ -82,14 +84,14 @@ float KdYaw;
 
 void WifiStart() {
   WiFi.mode(WIFI_STA);
+  WiFi.setHostname("DR0NE");
+  IPAddress local_IP(192, 168, 1, 184);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   server.begin();
-  WiFi.setHostname("DR0NE");
-  IPAddress local_IP(192, 168, 1, 184);
 }
 void MotorStart() {
   BrushlessM1.attach(M1, 1000, 2000);
@@ -167,10 +169,72 @@ void MPU6050Start() {
   //delay(100);
 }
 
+void readSerialData() {
+  if (Serial.available() > 0) {
+    while (Serial.available()) {
+      char c = Serial.read();
+      incomingData += c;
+      delay(2);
+    }
+    Serial.println("Received data:");
+    Serial.println(incomingData);
+    filterAndStore();
+    incomingData = "";
+  }
+}
+void filterAndStore() {
+  int values[9] = { 0 };
 
+  int index = 0;
+  int startIndex = 0;
+  for (int i = 0; i < incomingData.length(); i++) {
+    if (incomingData[i] == '/') {
+      String valueStr = incomingData.substring(startIndex, i);
+      values[index++] = valueStr.toInt();
+      startIndex = i + 1;
+    }
+  }
+  if (startIndex < incomingData.length()) {
+    String valueStr = incomingData.substring(startIndex);
+    values[index] = valueStr.toInt();
+  }
+  storeValue("KpRoll", values[0]);
+  storeValue("KiRoll", values[1]);
+  storeValue("KdRoll", values[2]);
+  storeValue("KpPitch", values[3]);
+  storeValue("KiPitch", values[4]);
+  storeValue("KdPitch", values[5]);
+  storeValue("KpYaw", values[6]);
+  storeValue("KiYaw", values[7]);
+  storeValue("KdYaw", values[8]);
+  printandset();
+}
 
-
-
+void printandset() {
+  KpRoll = printvalue("KpRoll");
+  KiRoll = printvalue("KiRoll");
+  KdRoll = printvalue("KdRoll");
+  KpPitch = printvalue("KpPitch");
+  KiPitch = printvalue("KiPitch");
+  KdPitch = printvalue("KdPitch");
+  KpYaw = printvalue("KpYaw");
+  KiYaw = printvalue("KiYaw");
+  KdYaw = printvalue("KdYaw");
+}
+float printvalue(const char* key) {
+  preferences.begin("my-app", false);
+  float value = preferences.getInt(key, 0);
+  Serial.print(key);
+  Serial.print(": ");
+  Serial.println(value);
+  preferences.end();
+  return value;
+}
+void storeValue(const char* key, int value) {
+  preferences.begin("my-app", false);
+  preferences.putInt(key, value);
+  preferences.end();
+}
 void WifiConection() {
   WiFiClient client = server.available();
   if (client.available()) {
@@ -179,113 +243,18 @@ void WifiConection() {
       if (c == '\n') { break; }
       msj += c;
     }
-    Serial.println(msj);
+    //Serial.println(msj);
     clasify();
     msj = "";
   }
 }
 void clasify() {
-  if(msj[5] == 'R') {
-    asignData();
-    }
-  else if(msj[5] == 's') {
-    asignPID();
-    }
-}
-
-void asignPID(){
-  String var = "";
-  int i;
-  int cont = 9;
-  for (i = 9; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  KpRoll = var.toFloat();
-  var = "";
-  for (i = cont+1; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  KiRoll = var.toFloat();
-  var = "";
-  for (i = cont; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  KdRoll = var.toFloat();
-  var = "";
-  for (i = cont; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  KpPitch = var.toFloat();
-  var = "";
-  for (i = cont; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  KiPitch = var.toFloat();
-  var = "";
-  for (i = cont; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  KdPitch = var.toFloat();
-  var = "";
-  for (i = cont; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  KpYaw = var.toFloat();
-  var = "";
-  for (i = cont; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  KiYaw = var.toFloat();
-  var = "";
-  for (i = cont; msj[i] != '\0'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  KdYaw = var.toFloat();
-
-
-  Serial.print("KpRoll = ");
-  Serial.print(KpRoll);
-  Serial.print(",");
-  Serial.print("KiRoll = ");
-  Serial.print(KiRoll);
-  Serial.print(",");
-  Serial.print("KdRoll = ");
-  Serial.print(KdRoll);
-  Serial.print(",");
-  Serial.print("kpPitch = ");
-  Serial.print(KpPitch);
-  Serial.print(",");
-  Serial.print("KiPitch = ");
-  Serial.print(KiPitch);
-  Serial.print(",");
-  Serial.print("KdPitch = ");
-  Serial.print(KpRoll);
-  Serial.print(",");
-  Serial.print("KpYaw = ");
-  Serial.print(KpYaw);
-  Serial.print(",");
-  Serial.print("KiYaw = ");
-  Serial.print(KiYaw);
-  Serial.print(",");
-  Serial.print("KdYaw = ");
-  Serial.print(KdYaw);
-  Serial.print(",");
-}
-void asignData(){
   /*GET /Res?ID=8896&Slider=0&XGyro=0.005&YGyro=0.015&0x=-2.6025&0y=3.82375 HTTP/1.1*/
   int temp;
   String var = "";
   for (int i = 12; i <= 16; i++) var += msj.charAt(i);
   temp = var.toInt();
+
   if (TimingVar > 9800 && temp < 1150) {
     assign();
     TimingVar = temp;
@@ -336,75 +305,45 @@ void assign() {
   }
   DatosApp[4] = var.toFloat();
   var = "";
-  /*
-  Serial.print("Slider: "); Serial.print(DatosApp[0]); Serial.print("  ");
-  Serial.print("Gyro X Axis: "); Serial.print(DatosApp[1]); Serial.print("  ");
-  Serial.print("Gyro Y Axis: "); Serial.print(DatosApp[2]); Serial.print("  ");
-  Serial.print("Zero X Axis: "); Serial.print(DatosApp[3]); Serial.print("  ");
-  Serial.print("Zero Y Axis: "); Serial.print(DatosApp[4]); Serial.print("  ");
-  Serial.println("uT");*/
 }
 void Acelerometro() {
-  //float AnglePitchX;    //Variables para tener angulos en grados
-  //float AnglePitchY;    //Variables para tener angulos en grados
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-  /*
-  Serial.print("Acceleration X: ");
 
-  Serial.print(a.acceleration.x);
-  Serial.print(", Y: ");
-  Serial.print(a.acceleration.y);
-  Serial.print(", Z: "); Serial.print(a.acceleration.z);
-  Serial.println(" m/s^2");
-  Serial.print("Rotation X: ");
-  Serial.print(g.gyro.x);
-  Serial.print(", Y: ");
-  Serial.print(g.gyro.y);
-  Serial.print(", Z: ");
-  Serial.print(g.gyro.z);
-  Serial.println(" rad/s");
-  Serial.print("Temperature: ");
-  Serial.print(temp.temperature);
-  Serial.println(" degC");*/
-  //AnglePitchX=-atan(a.acceleration.x/sqrt(a.acceleration.y*a.acceleration.y+a.acceleration.z*
-  //a.acceleration.z))*1/(3.142/180);
-
-  // Print out the values
-  /*
-  Serial.print("Angle X: ");
-  Serial.print(AnglePitchX); Serial.println(" °c");
-  */
-  //AnglePitchY=-atan(a.acceleration.y/sqrt(a.acceleration.x*a.acceleration.x+a.acceleration.z*
-  //a.acceleration.z))*1/(3.142/180);
-  // Print out the values
-  /*
-  Serial.print("Angle Y: ");
-  Serial.print(AnglePitchY);
-  Serial.println(" °c");
- 
-  Serial.println("");*/
-  //delay(500);
   DatosAcelerometro[0] = a.acceleration.x;
   DatosAcelerometro[1] = a.acceleration.y;
 }
 int Magnetometro() {
   compass.read();
-  DatosMagnetometro[1] = compass.getAzimuth();
-  if (DatosMagnetometro[1] < 0) { DatosMagnetometro[1] += 360; }
-
-  if (DatosMagnetometro[1] < DatosMagnetometro[3]) {
-    for (int i = 0; DatosMagnetometro[1] < DatosMagnetometro[3]; i++) {
-      DatosMagnetometro[0]++;
-    }
-  } else if (DatosMagnetometro[1] > DatosMagnetometro[3]) {
-    for (int i = 0; DatosMagnetometro[1] > DatosMagnetometro[3]; i++) {
-      DatosMagnetometro[0]++;
-    }
-  }
-
-  return DatosMagnetometro[1];
+  return compass.getAzimuth();
 }
+void procesMag(){
+  int act = Magnetometro();
+  int actP = Magnetometro();
+  int invAct = DatosMagnetometro[0];
+
+  if (DatosMagnetometro[0] > 0) {
+    invAct -= 180;
+    act -= DatosMagnetometro[0];
+    if (act < -180) {
+        act = (-1) * invAct + actP + 180; 
+    }
+    DatosMagnetometro[1] = act;
+  };
+  if (DatosMagnetometro[0] < 0) {
+    invAct += 180;
+    act += (DatosMagnetometro[0]) * -1;
+    if (act > 180) {
+      act = (-1) * invAct + actP - 180; 
+    }
+    DatosMagnetometro[1] = act;
+  };
+  if (DatosMagnetometro[0] == 0) {
+    DatosMagnetometro[1] = act;
+  };
+
+}
+
 void PIDRoll() {
   float E = DatosAcelerometro[0] - DatosApp[1];
   float IoutRoll = IoutRoll + (E * KiRoll);
@@ -445,8 +384,7 @@ void MotorDriver() {
 }
 void setup() {
   Serial.begin(115200);
-
-  WifiStart();  //INICIO DE RECEPCION DE DATOS
+  WifiStart();  
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
   pinMode(2, OUTPUT);
   ESP32PWM::allocateTimer(0);
@@ -454,30 +392,39 @@ void setup() {
   ESP32PWM::allocateTimer(2);
   ESP32PWM::allocateTimer(3);
 
-  BrushlessM1.setPeriodHertz(50);  // standard 50 hz servo
+  BrushlessM1.setPeriodHertz(50); 
   BrushlessM2.setPeriodHertz(50);
   BrushlessM3.setPeriodHertz(50);
   BrushlessM4.setPeriodHertz(50);
   MotorStart();
-  /*MPU6050Start();
+ // MPU6050Start();
   compass.init();
-  DatosMagnetometro[2] = Magnetometro();*/
+  Serial.println("Tiempo para actualizar valores del PID");
+  Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
+  for (int i = 0; i < 2000; i++) {
+    readSerialData();
+    delay(1);
+  }
+  Serial.println("Finalizo para actualizar valores del PID");
+  printandset();
+
+  DatosMagnetometro[0] = Magnetometro();
 }
-void loop() {  //NO PONER DELAYS!!!!!!!
+void loop() {  
+
   int bri = 0;
-  WifiConection();  //RECEPCION DE DATOS
-  /* Acelerometro();   //INPUT DEL GIROSCOPIO
-  Magnetometro();   //INPUT DEL MAGNETOMETRO PIDRoll();                              //PID ROLL
-  PIDPitch();       //PID PITCH
-  PIDYaw();         //PID YAW PID
-  PIDconvert();                             //SUMA DE LOS OUTPUT DE LOS PID
-  MotorDriver();
+  WifiConection();  
+  //Acelerometro();   
+  procesMag();  
+  PIDRoll();                            
+  PIDPitch();       
+  PIDYaw();         
+  PIDconvert();                             
+  MotorDriver(); 
   bri = DatosApp[0] * (17 / 12);
-  analogWrite(2, bri); */
-  //delay(20);                                //UNICO DELAY PARA DEJA PROCESAR
+  analogWrite(2, bri);
 
-
-/*   Serial.print("Signal Streght: ");
+  Serial.print("Signal Streght: ");
   Serial.print(WiFi.RSSI());
   Serial.print(","); 
   Serial.print("Slider: ");
@@ -495,20 +442,17 @@ void loop() {  //NO PONER DELAYS!!!!!!!
   Serial.print("Zero Y Axis: ");
   Serial.print(DatosApp[4]);
   Serial.print(",");
-  Serial.print("Compass angle: ");
-  Serial.print(DatosMagnetometro[1]);
-  Serial.print(",");
-  Serial.print("Compass zero: ");
-  Serial.print(DatosMagnetometro[3]);
-  Serial.print(",");
-  Serial.print("Compass difference: ");
+  Serial.print("Compass initial angle: ");
   Serial.print(DatosMagnetometro[0]);
   Serial.print(",");
-  Serial.print("Accel X-Axis");
+  Serial.print("Compass difference: ");
+  Serial.print(DatosMagnetometro[1]);
+  Serial.print(",");
+  Serial.print("Accel X-Axis: ");
   Serial.print(DatosAcelerometro[0]);
   Serial.print(",");
-  Serial.print("Accel Y-Axis");
+  Serial.print("Accel Y-Axis: ");
   Serial.print(DatosAcelerometro[1]);
   Serial.print(",");
   Serial.println("uT");
- */}
+}
