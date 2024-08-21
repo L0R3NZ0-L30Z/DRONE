@@ -47,30 +47,30 @@ QMC5883LCompass compass;
 
 
 String incomingData;
-const char* ssid = "SSID";          
-const char* password = "PASSWORD";  
-String msj;                         
+const char* ssid = "SSID";
+const char* password = "PASSWORD";
+String msj;
 int TimingVar = 950;
-float bat = 99.9;                            
-int DatosMagnetometro[2] = { 0, 0};      
-float DatosAcelerometro[] = { 0, 0, 0, 0 };  
+float bat = 99.9;
+int DatosMagnetometro[2] = { 0, 0 };
+float DatosAcelerometro[] = { 0, 0, 0, 0 };
 
-float DatosApp[5] = { 0, 0, 0, 0, 0 };  
+float DatosApp[5] = { 0, 0, 0, 0, 0 };
 Servo BrushlessM1;
 Servo BrushlessM2;
 Servo BrushlessM3;
 Servo BrushlessM4;
 int PW[4] = { 0, 0, 0, 0 };  // ORDEN M1,M2,M3,M4
-float PWRoll;                
-float PWPitch;               
-float PWYaw;                 
+float PWRoll;
+float PWPitch;
+float PWYaw;
 float RpE = 0;
 float PpE = 0;
 float YpE = 0;
-const int M1 = 15;  
-const int M2 = 23;  
-const int M3 = 25;  
-const int M4 = 33;  
+const int M1 = 15;
+const int M2 = 23;
+const int M3 = 25;
+const int M4 = 33;
 float KpRoll;
 float KiRoll;
 float KdRoll;
@@ -81,11 +81,15 @@ float KpYaw;
 float KiYaw;
 float KdYaw;
 
+IPAddress local_IP(192, 168, 1, 184);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
+
 
 void WifiStart() {
   WiFi.mode(WIFI_STA);
   WiFi.setHostname("DR0NE");
-  IPAddress local_IP(192, 168, 1, 184);
+  WiFi.config(local_IP, gateway, subnet);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -317,7 +321,7 @@ int Magnetometro() {
   compass.read();
   return compass.getAzimuth();
 }
-void procesMag(){
+void procesMag() {
   int act = Magnetometro();
   int actP = Magnetometro();
   int invAct = DatosMagnetometro[0];
@@ -326,7 +330,7 @@ void procesMag(){
     invAct -= 180;
     act -= DatosMagnetometro[0];
     if (act < -180) {
-        act = (-1) * invAct + actP + 180; 
+      act = (-1) * invAct + actP + 180;
     }
     DatosMagnetometro[1] = act;
   };
@@ -334,14 +338,13 @@ void procesMag(){
     invAct += 180;
     act += (DatosMagnetometro[0]) * -1;
     if (act > 180) {
-      act = (-1) * invAct + actP - 180; 
+      act = (-1) * invAct + actP - 180;
     }
     DatosMagnetometro[1] = act;
   };
   if (DatosMagnetometro[0] == 0) {
     DatosMagnetometro[1] = act;
   };
-
 }
 
 void PIDRoll() {
@@ -384,7 +387,7 @@ void MotorDriver() {
 }
 void setup() {
   Serial.begin(115200);
-  WifiStart();  
+  //WifiStart();
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
   pinMode(2, OUTPUT);
   ESP32PWM::allocateTimer(0);
@@ -392,12 +395,12 @@ void setup() {
   ESP32PWM::allocateTimer(2);
   ESP32PWM::allocateTimer(3);
 
-  BrushlessM1.setPeriodHertz(50); 
+  BrushlessM1.setPeriodHertz(50);
   BrushlessM2.setPeriodHertz(50);
   BrushlessM3.setPeriodHertz(50);
   BrushlessM4.setPeriodHertz(50);
   MotorStart();
- // MPU6050Start();
+  MPU6050Start();
   compass.init();
   Serial.println("Tiempo para actualizar valores del PID");
   Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
@@ -410,23 +413,35 @@ void setup() {
 
   DatosMagnetometro[0] = Magnetometro();
 }
-void loop() {  
+void loop() {
 
   int bri = 0;
-  WifiConection();  
-  //Acelerometro();   
-  procesMag();  
-  PIDRoll();                            
-  PIDPitch();       
-  PIDYaw();         
-  PIDconvert();                             
-  MotorDriver(); 
+  //WifiConection();
+  Acelerometro();
+  procesMag();
+  PIDRoll();
+  PIDPitch();
+  PIDYaw();
+  PIDconvert();
+  MotorDriver();
   bri = DatosApp[0] * (17 / 12);
   analogWrite(2, bri);
 
+  Serial.print("M1: ");
+  Serial.print(PW[0]);
+  Serial.print(",");
+  Serial.print("M2: ");
+  Serial.print(PW[1]);
+  Serial.print(",");
+  Serial.print("M3: ");
+  Serial.print(PW[2]);
+  Serial.print(",");
+  Serial.print("M4: ");
+  Serial.print(PW[3]);
+  Serial.print(" |  ");
   Serial.print("Signal Streght: ");
   Serial.print(WiFi.RSSI());
-  Serial.print(","); 
+  Serial.print(",");
   Serial.print("Slider: ");
   Serial.print(DatosApp[0]);
   Serial.print(",");
