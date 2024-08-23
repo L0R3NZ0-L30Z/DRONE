@@ -68,8 +68,8 @@ float RpE = 0;
 float PpE = 0;
 float YpE = 0;
 const int M1 = 15;
-const int M2 = 23;
-const int M3 = 25;
+const int M2 = 25;
+const int M3 = 23;
 const int M4 = 33;
 float KpRoll;
 float KiRoll;
@@ -81,21 +81,18 @@ float KpYaw;
 float KiYaw;
 float KdYaw;
 
-IPAddress local_IP(192, 168, 1, 184);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
 
 
 void WifiStart() {
   WiFi.mode(WIFI_STA);
-  WiFi.setHostname("DR0NE");
-  WiFi.config(local_IP, gateway, subnet);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   server.begin();
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 void MotorStart() {
   BrushlessM1.attach(M1, 1000, 2000);
@@ -187,20 +184,20 @@ void readSerialData() {
   }
 }
 void filterAndStore() {
-  int values[9] = { 0 };
+  float values[9] = { 0 };
 
   int index = 0;
   int startIndex = 0;
   for (int i = 0; i < incomingData.length(); i++) {
     if (incomingData[i] == '/') {
       String valueStr = incomingData.substring(startIndex, i);
-      values[index++] = valueStr.toInt();
+      values[index++] = valueStr.toFloat();
       startIndex = i + 1;
     }
   }
   if (startIndex < incomingData.length()) {
     String valueStr = incomingData.substring(startIndex);
-    values[index] = valueStr.toInt();
+    values[index] = valueStr.toFloat();
   }
   storeValue("KpRoll", values[0]);
   storeValue("KiRoll", values[1]);
@@ -227,17 +224,18 @@ void printandset() {
 }
 float printvalue(const char* key) {
   preferences.begin("my-app", false);
-  float value = preferences.getInt(key, 0);
+  float value = preferences.getFloat(key, 0.0);
   Serial.print(key);
   Serial.print(": ");
   Serial.println(value);
   preferences.end();
   return value;
 }
-void storeValue(const char* key, int value) {
+float storeValue(const char* key, float value) {
   preferences.begin("my-app", false);
-  preferences.putInt(key, value);
+  preferences.putFloat(key, value);
   preferences.end();
+  return 0;
 }
 void WifiConection() {
   WiFiClient client = server.available();
@@ -250,6 +248,12 @@ void WifiConection() {
     //Serial.println(msj);
     clasify();
     msj = "";
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: text/plain");
+    client.println("Connection: close");
+    client.println();
+    client.println("Oki Doki!");
+    client.stop();
   }
 }
 void clasify() {
@@ -283,7 +287,7 @@ void assign() {
     cont++;
   }
 
-  DatosApp[1] = var.toFloat();
+  //DatosApp[1] = var.toFloat();
   var = "";
 
   cont = cont + 7;
@@ -291,7 +295,7 @@ void assign() {
     var += msj[i];
     cont++;
   }
-  DatosApp[2] = var.toFloat();
+  //DatosApp[2] = var.toFloat();
   var = "";
 
   cont = cont + 4;
@@ -299,7 +303,7 @@ void assign() {
     var += msj[i];
     cont++;
   }
-  DatosApp[3] = var.toFloat();
+  //DatosApp[3] = var.toFloat();
   var = "";
 
   cont = cont + 4;
@@ -307,7 +311,7 @@ void assign() {
     var += msj[i];
     cont++;
   }
-  DatosApp[4] = var.toFloat();
+  //DatosApp[4] = var.toFloat();
   var = "";
 }
 void Acelerometro() {
@@ -374,10 +378,10 @@ void PIDconvert() {
   X= ROLL
   Y=PITCH
 */
-  PW[0] = DatosApp[0] + PWRoll * (2000 / 109) + PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
-  PW[1] = DatosApp[0] - PWRoll * (2000 / 109) + PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
-  PW[2] = DatosApp[0] + PWRoll * (2000 / 109) - PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
-  PW[3] = DatosApp[0] - PWRoll * (2000 / 109) - PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
+  PW[0] = DatosApp[0] - PWRoll * (2000 / 109) + PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
+  PW[1] = DatosApp[0] + PWRoll * (2000 / 109) + PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
+  PW[2] = DatosApp[0] - PWRoll * (2000 / 109) - PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
+  PW[3] = DatosApp[0] + PWRoll * (2000 / 109) - PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
 }
 void MotorDriver() {
   BrushlessM1.write(PW[0]);
@@ -387,7 +391,16 @@ void MotorDriver() {
 }
 void setup() {
   Serial.begin(115200);
-  //WifiStart();
+  Serial.println("Tiempo para actualizar valores del PID");
+  Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
+  for (int i = 0; i < 3000; i++) {
+    readSerialData();
+    delay(1);
+  }
+  Serial.println("Finalizo para actualizar valores del PID");
+  printandset();
+  delay(1000);
+  WifiStart();
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
   pinMode(2, OUTPUT);
   ESP32PWM::allocateTimer(0);
@@ -402,21 +415,13 @@ void setup() {
   MotorStart();
   MPU6050Start();
   compass.init();
-  Serial.println("Tiempo para actualizar valores del PID");
-  Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
-  for (int i = 0; i < 2000; i++) {
-    readSerialData();
-    delay(1);
-  }
-  Serial.println("Finalizo para actualizar valores del PID");
-  printandset();
-
   DatosMagnetometro[0] = Magnetometro();
+
 }
 void loop() {
 
   int bri = 0;
-  //WifiConection();
+  WifiConection();
   Acelerometro();
   procesMag();
   PIDRoll();
