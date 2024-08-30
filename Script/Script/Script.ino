@@ -55,7 +55,7 @@ float bat = 99.9;
 int DatosMagnetometro[2] = { 0, 0 };
 float DatosAcelerometro[] = { 0, 0, 0, 0 };
 
-float DatosApp[5] = { 0, 0, 0, 0, 0 };
+float DatosApp[5] = { 0, 0, 0, 0, 0 };  //Slider, Up, Down, Left, Right
 Servo BrushlessM1;
 Servo BrushlessM2;
 Servo BrushlessM3;
@@ -80,7 +80,7 @@ float KdPitch;
 float KpYaw;
 float KiYaw;
 float KdYaw;
-
+#define AnguloDeControl 5;
 
 
 void WifiStart() {
@@ -258,6 +258,7 @@ void WifiConection() {
 }
 void clasify() {
   /*GET /Res?ID=8896&Slider=0&XGyro=0.005&YGyro=0.015&0x=-2.6025&0y=3.82375 HTTP/1.1*/
+  /*GET /Res?ID=8896&Slider=0&Up=0.005&Down=0.015&Left=-2.6025&Right=3.82375 HTTP/1.1*/
   int temp;
   String var = "";
   for (int i = 12; i <= 16; i++) var += msj.charAt(i);
@@ -281,37 +282,37 @@ void assign() {
   }
   DatosApp[0] = var.toFloat();
   var = "";
-  cont = cont + 7;
-  for (i = cont; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-
-  //DatosApp[1] = var.toFloat();
-  var = "";
-
-  cont = cont + 7;
-  for (i = cont; msj[i] != '&'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  //DatosApp[2] = var.toFloat();
-  var = "";
-
   cont = cont + 4;
   for (i = cont; msj[i] != '&'; i++) {
     var += msj[i];
     cont++;
   }
-  //DatosApp[3] = var.toFloat();
+
+  DatosApp[1] = var.toFloat();
   var = "";
 
-  cont = cont + 4;
+  cont = cont + 5;
+  for (i = cont; msj[i] != '&'; i++) {
+    var += msj[i];
+    cont++;
+  }
+  DatosApp[2] = var.toFloat();
+  var = "";
+
+  cont = cont + 6;
+  for (i = cont; msj[i] != '&'; i++) {
+    var += msj[i];
+    cont++;
+  }
+  DatosApp[3] = var.toFloat();
+  var = "";
+
+  cont = cont + 7;
   for (i = cont; msj[i] != '\0'; i++) {
     var += msj[i];
     cont++;
   }
-  //DatosApp[4] = var.toFloat();
+  DatosApp[4] = var.toFloat();
   var = "";
 }
 void Acelerometro() {
@@ -352,19 +353,37 @@ void procesMag() {
 }
 
 void PIDRoll() {
-  float E = DatosAcelerometro[0] - DatosApp[1];
+  int var;
+  if (DatosApp[3] == 1) {
+    var = AnguloDeControl;
+  }
+  else if (DatosApp[4] == 1) {
+    var = AnguloDeControl * -1;
+  } else {
+    var = 0;
+  }
+  float E = DatosAcelerometro[0] - var;
   float IoutRoll = IoutRoll + (E * KiRoll);
   PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + IoutRoll;
-  RpE = DatosAcelerometro[0] - DatosApp[1];
+  RpE = DatosAcelerometro[0] - var;
 }
 void PIDPitch() {
-  float E = DatosAcelerometro[1] - DatosApp[2];
+  int var;
+  if (DatosApp[1] == 1) {
+    var = AnguloDeControl;
+  }
+  else if (DatosApp[2] == 1) {
+    var = AnguloDeControl * -1;
+  } else {
+    var = 0;
+  }
+  float E = DatosAcelerometro[1] - var;
   float IoutPitch = IoutPitch + (E * KiPitch);
   PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + IoutPitch;
-  PpE = DatosAcelerometro[1] - DatosApp[2];
+  PpE = DatosAcelerometro[1] - var;
 }
 void PIDYaw() {
-  float E = DatosMagnetometro[0];
+  float E = DatosMagnetometro[1];
   float IoutYaw = IoutYaw + (E * KiYaw);
   PWYaw = (E * KpYaw) + ((E - YpE) * KdYaw) + IoutYaw;
   YpE = DatosMagnetometro[0] - DatosMagnetometro[1];
@@ -413,22 +432,21 @@ void setup() {
   BrushlessM3.setPeriodHertz(50);
   BrushlessM4.setPeriodHertz(50);
   MotorStart();
-  MPU6050Start();
-  compass.init();
-  DatosMagnetometro[0] = Magnetometro();
-
+  //MPU6050Start();
+  //compass.init();
+  //DatosMagnetometro[0] = Magnetometro();
 }
 void loop() {
 
   int bri = 0;
-  WifiConection();
+  WifiConection(); /*
   Acelerometro();
   procesMag();
   PIDRoll();
   PIDPitch();
   PIDYaw();
   PIDconvert();
-  MotorDriver();
+  MotorDriver();*/
   bri = DatosApp[0] * (17 / 12);
   analogWrite(2, bri);
 
@@ -450,16 +468,16 @@ void loop() {
   Serial.print("Slider: ");
   Serial.print(DatosApp[0]);
   Serial.print(",");
-  Serial.print("Gyro X Axis: ");
+  Serial.print("Up: ");
   Serial.print(DatosApp[1]);
   Serial.print(",");
-  Serial.print("Gyro Y Axis: ");
+  Serial.print("Down: ");
   Serial.print(DatosApp[2]);
   Serial.print(",");
-  Serial.print("Zero X Axis: ");
+  Serial.print("Left: ");
   Serial.print(DatosApp[3]);
   Serial.print(",");
-  Serial.print("Zero Y Axis: ");
+  Serial.print("Right: ");
   Serial.print(DatosApp[4]);
   Serial.print(",");
   Serial.print("Compass initial angle: ");
