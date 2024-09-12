@@ -40,6 +40,7 @@ Advertencias:
 #include <esp_system.h>
 
 
+
 WiFiServer server(80);
 Adafruit_MPU6050 mpu;
 Preferences preferences;
@@ -55,7 +56,7 @@ float bat = 99.9;
 int DatosMagnetometro[2] = { 0, 0 };
 float DatosAcelerometro[] = { 0, 0, 0, 0 };
 
-float DatosApp[5] = { 0, 0, 0, 0, 0 };  //Slider, Up, Down, Left, Right
+float DatosApp[7] = { 0, 0, 0, 0, 0, 0, 0 };  //Slider, Up, Down, Left, Right,horario, anti-horario
 Servo BrushlessM1;
 Servo BrushlessM2;
 Servo BrushlessM3;
@@ -80,7 +81,7 @@ float KdPitch;
 float KpYaw;
 float KiYaw;
 float KdYaw;
-#define AnguloDeControl 5;
+const int AnguloDeControl = 2;
 
 
 void WifiStart() {
@@ -252,13 +253,16 @@ void WifiConection() {
     client.println("Content-Type: text/plain");
     client.println("Connection: close");
     client.println();
-    client.println("Oki Doki!");
+    client.println("Ok");
     client.stop();
   }
 }
 void clasify() {
   /*GET /Res?ID=8896&Slider=0&XGyro=0.005&YGyro=0.015&0x=-2.6025&0y=3.82375 HTTP/1.1*/
   /*GET /Res?ID=8896&Slider=0&Up=0.005&Down=0.015&Left=-2.6025&Right=3.82375 HTTP/1.1*/
+  /*GET /Res?ID=1453&Slider=0&Up=0&Down0&Left=0&Right=0&Hora=0&Anti=0 HTTP/1.1*/
+  /*GET /Res?ID=6741&Slider=0&Axis=1&KP=0&KI=0&KD=0 HTTP/1.1*/
+
   int temp;
   String var = "";
   for (int i = 12; i <= 16; i++) var += msj.charAt(i);
@@ -273,6 +277,7 @@ void clasify() {
   }
 }
 void assign() {
+  int Axis = 0;
   String var = "";
   int i;
   int cont = 24;
@@ -282,38 +287,50 @@ void assign() {
   }
   DatosApp[0] = var.toFloat();
   var = "";
+  cont = cont + 6;
+  for (i = cont; msj[i] != '&'; i++) {
+    var += msj[i];
+    cont++;
+  }
+  Axis = var.toFloat();
+  var = "";
+
+
+
   cont = cont + 4;
   for (i = cont; msj[i] != '&'; i++) {
     var += msj[i];
     cont++;
   }
 
-  DatosApp[1] = var.toFloat();
+  if (Axis == 1) { KpRoll = var.toFloat();
+  } else if (Axis == 2) { KpYaw = var.toFloat();
+  } else if (Axis == 3) { KpPitch = var.toFloat();
+  }
   var = "";
 
-  cont = cont + 5;
+  cont = cont + 4;
   for (i = cont; msj[i] != '&'; i++) {
     var += msj[i];
     cont++;
   }
-  DatosApp[2] = var.toFloat();
+  if (Axis == 1) { KiRoll = var.toFloat();
+  } else if (Axis == 2) { KiYaw = var.toFloat();
+  } else if (Axis == 3) { KiPitch = var.toFloat();
+  }
   var = "";
 
-  cont = cont + 6;
+  cont = cont + 4;
   for (i = cont; msj[i] != '&'; i++) {
     var += msj[i];
     cont++;
   }
-  DatosApp[3] = var.toFloat();
+  if (Axis == 1) { KdRoll = var.toFloat();
+  } else if (Axis == 2) { KdYaw = var.toFloat();
+  } else if (Axis == 3) { KdPitch = var.toFloat();
+  }
   var = "";
 
-  cont = cont + 7;
-  for (i = cont; msj[i] != '\0'; i++) {
-    var += msj[i];
-    cont++;
-  }
-  DatosApp[4] = var.toFloat();
-  var = "";
 }
 void Acelerometro() {
   sensors_event_t a, g, temp;
@@ -356,9 +373,8 @@ void PIDRoll() {
   int var;
   if (DatosApp[3] == 1) {
     var = AnguloDeControl;
-  }
-  else if (DatosApp[4] == 1) {
-    var = AnguloDeControl * -1;
+  } else if (DatosApp[4] == 1) {
+    var = AnguloDeControl * (-1);
   } else {
     var = 0;
   }
@@ -371,9 +387,8 @@ void PIDPitch() {
   int var;
   if (DatosApp[1] == 1) {
     var = AnguloDeControl;
-  }
-  else if (DatosApp[2] == 1) {
-    var = AnguloDeControl * -1;
+  } else if (DatosApp[2] == 1) {
+    var = AnguloDeControl * (-1);
   } else {
     var = 0;
   }
@@ -397,10 +412,10 @@ void PIDconvert() {
   X= ROLL
   Y=PITCH
 */
-  PW[0] = DatosApp[0] - PWRoll * (2000 / 109) + PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
-  PW[1] = DatosApp[0] + PWRoll * (2000 / 109) + PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
-  PW[2] = DatosApp[0] - PWRoll * (2000 / 109) - PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
-  PW[3] = DatosApp[0] + PWRoll * (2000 / 109) - PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
+  PW[0] = DatosApp[0] - PWRoll * (2000 / 109);  //+ PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
+  PW[1] = DatosApp[0] + PWRoll * (2000 / 109);  //+ PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
+  PW[2] = DatosApp[0] - PWRoll * (2000 / 109);  //- PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
+  PW[3] = DatosApp[0] + PWRoll * (2000 / 109);  //- PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
 }
 void MotorDriver() {
   BrushlessM1.write(PW[0]);
@@ -439,14 +454,14 @@ void setup() {
 void loop() {
 
   int bri = 0;
-  WifiConection(); /*
-  Acelerometro();
-  procesMag();
+  WifiConection();
+  /* Acelerometro();
+  procesMag(); */
   PIDRoll();
   PIDPitch();
   PIDYaw();
   PIDconvert();
-  MotorDriver();*/
+  MotorDriver();
   bri = DatosApp[0] * (17 / 12);
   analogWrite(2, bri);
 
@@ -479,6 +494,12 @@ void loop() {
   Serial.print(",");
   Serial.print("Right: ");
   Serial.print(DatosApp[4]);
+  Serial.print(","); 
+  Serial.print("Horiario: ");
+  Serial.print(DatosApp[5]);
+  Serial.print(",");
+  Serial.print("Anti-Horario: ");
+  Serial.print(DatosApp[6]);
   Serial.print(",");
   Serial.print("Compass initial angle: ");
   Serial.print(DatosMagnetometro[0]);
@@ -491,6 +512,37 @@ void loop() {
   Serial.print(",");
   Serial.print("Accel Y-Axis: ");
   Serial.print(DatosAcelerometro[1]);
+  Serial.print(",");
+
+  Serial.print("  |  ");
+  Serial.print("KpRoll: ");
+  Serial.print(KpRoll);
+  Serial.print(",");
+  Serial.print("KiRoll: ");
+  Serial.print(KiRoll);
+  Serial.print(",");
+  Serial.print("KdRoll: ");
+  Serial.print(KdRoll);
+  Serial.print(",");
+
+  Serial.print("KpPitch: ");
+  Serial.print(KpPitch);
+  Serial.print(",");
+  Serial.print("KiPitch: ");
+  Serial.print(KiPitch);
+  Serial.print(",");
+  Serial.print("KdPitch: ");
+  Serial.print(KdPitch);
+  Serial.print(",");
+
+  Serial.print("KpYaw: ");
+  Serial.print(KpYaw);
+  Serial.print(",");
+  Serial.print("KiYaw: ");
+  Serial.print(KiYaw);
+  Serial.print(",");
+  Serial.print("KdYaw: ");
+  Serial.print(KdYaw);
   Serial.print(",");
   Serial.println("uT");
 }
