@@ -295,14 +295,11 @@ void assign() {
   Axis = var.toFloat();
   var = "";
 
-
-
   cont = cont + 4;
   for (i = cont; msj[i] != '&'; i++) {
     var += msj[i];
     cont++;
   }
-
   if (Axis == 1) { KpRoll = var.toFloat();
   } else if (Axis == 2) { KpYaw = var.toFloat();
   } else if (Axis == 3) { KpPitch = var.toFloat();
@@ -447,16 +444,16 @@ void setup() {
   BrushlessM3.setPeriodHertz(50);
   BrushlessM4.setPeriodHertz(50);
   MotorStart();
-  //MPU6050Start();
-  //compass.init();
-  //DatosMagnetometro[0] = Magnetometro();
+  MPU6050Start();
+  compass.init();
+  DatosMagnetometro[0] = Magnetometro();
 }
 void loop() {
 
   int bri = 0;
   WifiConection();
-  /* Acelerometro();
-  procesMag(); */
+  Acelerometro();
+  procesMag(); 
   PIDRoll();
   PIDPitch();
   PIDYaw();
@@ -544,5 +541,5 @@ void loop() {
   Serial.print("KdYaw: ");
   Serial.print(KdYaw);
   Serial.print(",");
-  Serial.println("uT");
+  Serial.println("uT"); 
 }
