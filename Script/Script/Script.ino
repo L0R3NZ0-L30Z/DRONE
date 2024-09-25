@@ -375,10 +375,10 @@ void PIDRoll() {
   } else {
     var = 0;
   }
-  float E = DatosAcelerometro[0] - var;
+  float E = DatosAcelerometro[1] - var;
   float IoutRoll = IoutRoll + (E * KiRoll);
   PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + IoutRoll;
-  RpE = DatosAcelerometro[0] - var;
+  RpE = DatosAcelerometro[1] - var;
 }
 void PIDPitch() {
   int var;
@@ -389,10 +389,10 @@ void PIDPitch() {
   } else {
     var = 0;
   }
-  float E = DatosAcelerometro[1] - var;
+  float E = DatosAcelerometro[0] - var;
   float IoutPitch = IoutPitch + (E * KiPitch);
   PWPitch = (E * KpPitch) + ((E - PpE) * KdPitch) + IoutPitch;
-  PpE = DatosAcelerometro[1] - var;
+  PpE = DatosAcelerometro[0] - var;
 }
 void PIDYaw() {
   float E = DatosMagnetometro[1];
