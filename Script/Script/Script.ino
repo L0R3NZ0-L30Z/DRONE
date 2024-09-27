@@ -84,6 +84,19 @@ float KdYaw;
 const int AnguloDeControl = 2;
 
 
+
+void SerialUpdt() {
+  Serial.println("Tiempo para actualizar valores del PID");
+  Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
+  for (int i = 0; i < 3000; i++) {
+    readSerialData();
+    delay(1);
+  }
+  Serial.println("Finalizo para actualizar valores del PID");
+  printandset();
+  delay(1000);
+}
+
 void WifiStart() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -96,6 +109,16 @@ void WifiStart() {
   Serial.println(WiFi.localIP());
 }
 void MotorStart() {
+  ESP32PWM::allocateTimer(0);
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
+
+  BrushlessM1.setPeriodHertz(50);
+  BrushlessM2.setPeriodHertz(50);
+  BrushlessM3.setPeriodHertz(50);
+  BrushlessM4.setPeriodHertz(50);
+
   BrushlessM1.attach(M1, 1000, 2000);
   BrushlessM2.attach(M2, 1000, 2000);
   BrushlessM3.attach(M3, 1000, 2000);
@@ -169,6 +192,10 @@ void MPU6050Start() {
   }
   Serial.println("");*/
   //delay(100);
+}
+void CompassStart() {
+  compass.init();
+  DatosMagnetometro[0] = Magnetometro();
 }
 
 void readSerialData() {
@@ -300,9 +327,12 @@ void assign() {
     var += msj[i];
     cont++;
   }
-  if (Axis == 1) { KpRoll = var.toFloat();
-  } else if (Axis == 2) { KpYaw = var.toFloat();
-  } else if (Axis == 3) { KpPitch = var.toFloat();
+  if (Axis == 1) {
+    KpRoll = var.toFloat();
+  } else if (Axis == 2) {
+    KpYaw = var.toFloat();
+  } else if (Axis == 3) {
+    KpPitch = var.toFloat();
   }
   var = "";
 
@@ -311,9 +341,12 @@ void assign() {
     var += msj[i];
     cont++;
   }
-  if (Axis == 1) { KiRoll = var.toFloat();
-  } else if (Axis == 2) { KiYaw = var.toFloat();
-  } else if (Axis == 3) { KiPitch = var.toFloat();
+  if (Axis == 1) {
+    KiRoll = var.toFloat();
+  } else if (Axis == 2) {
+    KiYaw = var.toFloat();
+  } else if (Axis == 3) {
+    KiPitch = var.toFloat();
   }
   var = "";
 
@@ -322,12 +355,14 @@ void assign() {
     var += msj[i];
     cont++;
   }
-  if (Axis == 1) { KdRoll = var.toFloat();
-  } else if (Axis == 2) { KdYaw = var.toFloat();
-  } else if (Axis == 3) { KdPitch = var.toFloat();
+  if (Axis == 1) {
+    KdRoll = var.toFloat();
+  } else if (Axis == 2) {
+    KdYaw = var.toFloat();
+  } else if (Axis == 3) {
+    KdPitch = var.toFloat();
   }
   var = "";
-
 }
 void Acelerometro() {
   sensors_event_t a, g, temp;
@@ -409,10 +444,14 @@ void PIDconvert() {
   X= ROLL
   Y=PITCH
 */
-  PW[0] = DatosApp[0] - PWRoll * (2000 / 109);  //+ PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
-  PW[1] = DatosApp[0] + PWRoll * (2000 / 109);  //+ PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
-  PW[2] = DatosApp[0] - PWRoll * (2000 / 109);  //- PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
-  PW[3] = DatosApp[0] + PWRoll * (2000 / 109);  //- PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
+  PW[0] = DatosApp[0] - PWRoll * (2000 / 109);
+  +PWPitch*(2000 / 109) + PWYaw*(2000 / 109) * (9 / 5);
+  PW[1] = DatosApp[0] + PWRoll * (2000 / 109);
+  +PWPitch*(2000 / 109) - PWYaw*(2000 / 109) * (9 / 5);
+  PW[2] = DatosApp[0] - PWRoll * (2000 / 109);
+  -PWPitch*(2000 / 109) - PWYaw*(2000 / 109) * (9 / 5);
+  PW[3] = DatosApp[0] + PWRoll * (2000 / 109);
+  -PWPitch*(2000 / 109) + PWYaw*(2000 / 109) * (9 / 5);
 }
 void MotorDriver() {
   BrushlessM1.write(PW[0]);
@@ -420,126 +459,49 @@ void MotorDriver() {
   BrushlessM3.write(PW[2]);
   BrushlessM4.write(PW[3]);
 }
+
+void handleHttpRequestTask(void* parameter) {
+    for (;;) {
+        WifiConection();
+        vTaskDelay(80 / portTICK_PERIOD_MS);  // Delay for 100 ms
+    }
+}
+
+void sensorProcessingTask(void* parameter) {
+    for (;;) {
+        Acelerometro();
+        procesMag(); 
+        PIDRoll();
+        PIDPitch();
+        PIDYaw();
+        PIDconvert();
+        MotorDriver();
+        vTaskDelay(10 / portTICK_PERIOD_MS);  // Delay for 10 ms
+    }
+}
+
 void setup() {
   Serial.begin(115200);
-  Serial.println("Tiempo para actualizar valores del PID");
-  Serial.println("Formato: KpRoll/KiRoll/KdRoll/KpPitch/KiPitch/KdPitch/KpYaw/KiYaw/KdYaw");
-  for (int i = 0; i < 3000; i++) {
-    readSerialData();
-    delay(1);
-  }
-  Serial.println("Finalizo para actualizar valores del PID");
-  printandset();
-  delay(1000);
+  SerialUpdt();
   WifiStart();
   //pinMode(X, INPUT);                     //PIN A DEFINIR PARA CONTROLAR LA CARGA DE LA BATERIA
-  pinMode(2, OUTPUT);
-  ESP32PWM::allocateTimer(0);
-  ESP32PWM::allocateTimer(1);
-  ESP32PWM::allocateTimer(2);
-  ESP32PWM::allocateTimer(3);
-
-  BrushlessM1.setPeriodHertz(50);
-  BrushlessM2.setPeriodHertz(50);
-  BrushlessM3.setPeriodHertz(50);
-  BrushlessM4.setPeriodHertz(50);
+  //pinMode(2, OUTPUT);
   MotorStart();
   MPU6050Start();
-  compass.init();
-  DatosMagnetometro[0] = Magnetometro();
+  CompassStart();
+
+  xTaskCreatePinnedToCore(handleHttpRequestTask, "HTTP Task", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(sensorProcessingTask, "Sensor Task", 4096, NULL, 1, NULL, 0);
 }
 void loop() {
 
-  int bri = 0;
+ /*  int bri = 0;
   WifiConection();
   Acelerometro();
-  procesMag(); 
+  procesMag();
   PIDRoll();
   PIDPitch();
   PIDYaw();
   PIDconvert();
-  MotorDriver();
-  bri = DatosApp[0] * (17 / 12);
-  analogWrite(2, bri);
-
-  Serial.print("M1: ");
-  Serial.print(PW[0]);
-  Serial.print(",");
-  Serial.print("M2: ");
-  Serial.print(PW[1]);
-  Serial.print(",");
-  Serial.print("M3: ");
-  Serial.print(PW[2]);
-  Serial.print(",");
-  Serial.print("M4: ");
-  Serial.print(PW[3]);
-  Serial.print(" |  ");
-  Serial.print("Signal Streght: ");
-  Serial.print(WiFi.RSSI());
-  Serial.print(",");
-  Serial.print("Slider: ");
-  Serial.print(DatosApp[0]);
-  Serial.print(",");
-  Serial.print("Up: ");
-  Serial.print(DatosApp[1]);
-  Serial.print(",");
-  Serial.print("Down: ");
-  Serial.print(DatosApp[2]);
-  Serial.print(",");
-  Serial.print("Left: ");
-  Serial.print(DatosApp[3]);
-  Serial.print(",");
-  Serial.print("Right: ");
-  Serial.print(DatosApp[4]);
-  Serial.print(","); 
-  Serial.print("Horiario: ");
-  Serial.print(DatosApp[5]);
-  Serial.print(",");
-  Serial.print("Anti-Horario: ");
-  Serial.print(DatosApp[6]);
-  Serial.print(",");
-  Serial.print("Compass initial angle: ");
-  Serial.print(DatosMagnetometro[0]);
-  Serial.print(",");
-  Serial.print("Compass difference: ");
-  Serial.print(DatosMagnetometro[1]);
-  Serial.print(",");
-  Serial.print("Accel X-Axis: ");
-  Serial.print(DatosAcelerometro[0]);
-  Serial.print(",");
-  Serial.print("Accel Y-Axis: ");
-  Serial.print(DatosAcelerometro[1]);
-  Serial.print(",");
-
-  Serial.print("  |  ");
-  Serial.print("KpRoll: ");
-  Serial.print(KpRoll);
-  Serial.print(",");
-  Serial.print("KiRoll: ");
-  Serial.print(KiRoll);
-  Serial.print(",");
-  Serial.print("KdRoll: ");
-  Serial.print(KdRoll);
-  Serial.print(",");
-
-  Serial.print("KpPitch: ");
-  Serial.print(KpPitch);
-  Serial.print(",");
-  Serial.print("KiPitch: ");
-  Serial.print(KiPitch);
-  Serial.print(",");
-  Serial.print("KdPitch: ");
-  Serial.print(KdPitch);
-  Serial.print(",");
-
-  Serial.print("KpYaw: ");
-  Serial.print(KpYaw);
-  Serial.print(",");
-  Serial.print("KiYaw: ");
-  Serial.print(KiYaw);
-  Serial.print(",");
-  Serial.print("KdYaw: ");
-  Serial.print(KdYaw);
-  Serial.print(",");
-  Serial.println("uT"); 
+  MotorDriver(); */
 }
