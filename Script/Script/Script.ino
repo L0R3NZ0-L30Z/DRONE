@@ -65,6 +65,7 @@ int PW[4] = { 0, 0, 0, 0 };  // ORDEN M1,M2,M3,M4
 float PWRoll;
 float PWPitch;
 float PWYaw;
+static float IoutRoll = 0;
 float RpE = 0;
 float PpE = 0;
 float YpE = 0;
@@ -82,6 +83,10 @@ float KpYaw;
 float KiYaw;
 float KdYaw;
 const int AnguloDeControl = 2;
+
+unsigned long previousMillis = 0;
+unsigned long currentMillis;
+unsigned long loopDuration;
 
 
 
@@ -411,7 +416,7 @@ void PIDRoll() {
     var = 0;
   }
   float E = DatosAcelerometro[1] - var;
-  float IoutRoll = IoutRoll + (E * KiRoll);
+  IoutRoll = IoutRoll + (E * KiRoll);
   PWRoll = (E * KpRoll) + ((E - RpE) * KdRoll) + IoutRoll;
   RpE = DatosAcelerometro[1] - var;
 }
@@ -444,14 +449,19 @@ void PIDconvert() {
   X= ROLL
   Y=PITCH
 */
+  int mini = DatosApp[0] * 3 / 10;
   PW[0] = DatosApp[0] - PWRoll * (2000 / 109);
-  +PWPitch*(2000 / 109) + PWYaw*(2000 / 109) * (9 / 5);
+  //+PWPitch*(2000 / 109) + PWYaw*(2000 / 109) * (9 / 5);
   PW[1] = DatosApp[0] + PWRoll * (2000 / 109);
-  +PWPitch*(2000 / 109) - PWYaw*(2000 / 109) * (9 / 5);
+  //+PWPitch*(2000 / 109) - PWYaw*(2000 / 109) * (9 / 5);
   PW[2] = DatosApp[0] - PWRoll * (2000 / 109);
-  -PWPitch*(2000 / 109) - PWYaw*(2000 / 109) * (9 / 5);
+  //-PWPitch*(2000 / 109) - PWYaw*(2000 / 109) * (9 / 5);
   PW[3] = DatosApp[0] + PWRoll * (2000 / 109);
-  -PWPitch*(2000 / 109) + PWYaw*(2000 / 109) * (9 / 5);
+  //-PWPitch*(2000 / 109) + PWYaw*(2000 / 109) * (9 / 5);
+
+  for (int i = 0; i <= 3; i++) {
+    if (PW[i] < mini) { PW[i] = mini; }
+  }
 }
 void MotorDriver() {
   BrushlessM1.write(PW[0]);
@@ -461,23 +471,28 @@ void MotorDriver() {
 }
 
 void handleHttpRequestTask(void* parameter) {
-    for (;;) {
-        WifiConection();
-        vTaskDelay(80 / portTICK_PERIOD_MS);  // Delay for 100 ms
-    }
+  for (;;) {
+    WifiConection();
+    vTaskDelay(30 / portTICK_PERIOD_MS);  // Delay for 100 ms
+  }
 }
 
 void sensorProcessingTask(void* parameter) {
-    for (;;) {
-        Acelerometro();
-        procesMag(); 
-        PIDRoll();
-        PIDPitch();
-        PIDYaw();
-        PIDconvert();
-        MotorDriver();
-        vTaskDelay(10 / portTICK_PERIOD_MS);  // Delay for 10 ms
-    }
+  for (;;) {
+    loopDuration = millis() - currentMillis;
+    Serial.print("Loop duration: ");
+    Serial.print(loopDuration);
+    Serial.println(" ms");
+    currentMillis = millis();
+    Acelerometro();
+    procesMag();
+    PIDRoll();
+    PIDPitch();
+    PIDYaw();
+    PIDconvert();
+    MotorDriver();
+    vTaskDelay(0 / portTICK_PERIOD_MS);
+  }
 }
 
 void setup() {
@@ -495,7 +510,7 @@ void setup() {
 }
 void loop() {
 
- /*  int bri = 0;
+  /*  int bri = 0;
   WifiConection();
   Acelerometro();
   procesMag();
