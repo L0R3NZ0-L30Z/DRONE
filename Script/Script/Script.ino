@@ -449,19 +449,12 @@ void PIDconvert() {
   X= ROLL
   Y=PITCH
 */
-  int mini = DatosApp[0] * 3 / 10;
-  PW[0] = DatosApp[0] - PWRoll * (2000 / 109);
-  //+PWPitch*(2000 / 109) + PWYaw*(2000 / 109) * (9 / 5);
-  PW[1] = DatosApp[0] + PWRoll * (2000 / 109);
-  //+PWPitch*(2000 / 109) - PWYaw*(2000 / 109) * (9 / 5);
-  PW[2] = DatosApp[0] - PWRoll * (2000 / 109);
-  //-PWPitch*(2000 / 109) - PWYaw*(2000 / 109) * (9 / 5);
-  PW[3] = DatosApp[0] + PWRoll * (2000 / 109);
-  //-PWPitch*(2000 / 109) + PWYaw*(2000 / 109) * (9 / 5);
+  PW[0] = DatosApp[0] - PWRoll * (2000 / 109) + PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
+  PW[1] = DatosApp[0] + PWRoll * (2000 / 109) + PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
+  PW[2] = DatosApp[0] - PWRoll * (2000 / 109) - PWPitch * (2000 / 109) - PWYaw * (2000 / 109) * (9 / 5);
+  PW[3] = DatosApp[0] + PWRoll * (2000 / 109) - PWPitch * (2000 / 109) + PWYaw * (2000 / 109) * (9 / 5);
 
-  for (int i = 0; i <= 3; i++) {
-    if (PW[i] < mini) { PW[i] = mini; }
-  }
+
 }
 void MotorDriver() {
   BrushlessM1.write(PW[0]);
@@ -479,11 +472,11 @@ void handleHttpRequestTask(void* parameter) {
 
 void sensorProcessingTask(void* parameter) {
   for (;;) {
-    loopDuration = millis() - currentMillis;
+    /* loopDuration = millis() - currentMillis;
     Serial.print("Loop duration: ");
     Serial.print(loopDuration);
     Serial.println(" ms");
-    currentMillis = millis();
+    currentMillis = millis(); */
     Acelerometro();
     procesMag();
     PIDRoll();
@@ -491,7 +484,8 @@ void sensorProcessingTask(void* parameter) {
     PIDYaw();
     PIDconvert();
     MotorDriver();
-    vTaskDelay(0 / portTICK_PERIOD_MS);
+    Serial.println(DatosAcelerometro[1]);
+    vTaskDelay(1 / portTICK_PERIOD_MS);
   }
 }
 
